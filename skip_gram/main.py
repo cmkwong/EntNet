@@ -3,13 +3,13 @@ import os
 import torch.optim as optim
 import torch
 
-DATA_PATH = "../tasks_1-20_v1-2/en"
+DATA_PATH = "//tasks_1-20_v1-2/en"
 FILE_NAME = "qa1_single-supporting-fact_train.txt"
-SAVE_PATH = "../docs/embedding"
-NET_FILE = "checkpoint-Epoch-{}.data".format(1000)
+SAVE_PATH = "//docs/embedding"
+NET_FILE = "checkpoint-Epoch-{}.data".format(6000)
 SAVE_EPOCH = 1000
 PRINT_EVERY = 500
-LOAD_NET = False
+LOAD_NET = True
 
 BATCH_SIZE = 64
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
