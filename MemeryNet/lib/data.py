@@ -2,7 +2,7 @@ import torch
 from collections import Counter
 from codes.common_cmk import readFile
 
-def sentc2e(embedding, sentc_ints, fixed_length=6):
+def sentc2e(embedding, sentc_ints, fixed_length=6, device="cuda"):
     """
     :param embedding: nn.Embedding
     :param sentc_ints: [int] / int
@@ -13,7 +13,7 @@ def sentc2e(embedding, sentc_ints, fixed_length=6):
         sentc_ints = [sentc_ints]
     sentc_ints.extend([sentc_ints[-1]] * (fixed_length - len(sentc_ints)))
     embed_vectors = None
-    sentc_ints = torch.tensor(sentc_ints, dtype=torch.long)
+    sentc_ints = torch.tensor(sentc_ints, dtype=torch.long).to(device)
     for i, sentc_int in enumerate(sentc_ints):
         if i == 0:
             embed_vectors = embedding(sentc_int).unsqueeze(0).t()
@@ -47,8 +47,7 @@ def preprocess_story(path, file_name):
 
     # label the word as int
     token_stories = [readFile.label_word_as_int_token(word_story, word2int) for word_story in word_stories]
-    token_answers = [readFile.label_word_as_int_token(answer, word2int) for answer in answers]
-    token_reasons = [readFile.label_word_as_int_token(reason, word2int) for reason in reasons]
+    token_answers = readFile.label_word_as_int_token(answers, word2int)
 
     # separate the facts and questions
     # token_facts, token_questions = [], []
@@ -57,9 +56,9 @@ def preprocess_story(path, file_name):
     #     token_facts.append(token_fact)
     #     token_questions.append(token_question)
 
-    return token_stories, token_answers, token_reasons, int2word, word2int
+    return token_stories, token_answers, reasons, int2word, word2int
 
-def generate(embedding, token_stories, token_answers, word2int, fixed_length=6):
+def generate(embedding, token_stories, token_answers, word2int, fixed_length=6, device="cuda"):
     """
     :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
     :param token_answers: [ [12,34], ... ]
@@ -70,10 +69,10 @@ def generate(embedding, token_stories, token_answers, word2int, fixed_length=6):
         Q_count = 0
         E_s = []
         for sentence in story:
-            E = sentc2e(embedding, sentence, fixed_length=fixed_length)
-            if word2int['<q>'] in E:
+            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            if word2int['<q>'] in sentence:
                 Q = E
-                ans = sentc2e(embedding, token_answers[story_i][Q_count], fixed_length=1)
+                ans = sentc2e(embedding, token_answers[story_i][Q_count], fixed_length=1, device=device)
                 yield E_s, Q, ans, new_story
                 # reset after yield
                 new_story = False

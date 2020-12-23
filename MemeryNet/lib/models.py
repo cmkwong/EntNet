@@ -5,26 +5,27 @@ import torch.linalg as LA
 import random
 
 class EntNet(nn.Module):
-    def __init__(self, input_size, H_size, W_size, X_size, Y_size, Z_size, R_size, K_size):
+    def __init__(self, input_size, H_size, W_size, X_size, Y_size, Z_size, R_size, K_size, device):
         super(EntNet, self).__init__()
         self.H_size = H_size
         self.W_size = W_size
+        self.device = device
 
         # embedding parameters
-        self.F = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=input_size), requires_grad=True, dtype=torch.float)
+        self.F = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=input_size), requires_grad=True, dtype=torch.float).to(self.device)
 
         # dynamic memory
-        self.H = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=H_size), requires_grad=True, dtype=torch.float)
-        self.W = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=W_size), requires_grad=True, dtype=torch.float)
+        self.H = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=H_size), requires_grad=True, dtype=torch.float).to(self.device)
+        self.W = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=W_size), requires_grad=True, dtype=torch.float).to(self.device)
 
         # shared parameters
-        self.X = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=X_size), requires_grad=True, dtype=torch.float)
-        self.Y = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=Y_size), requires_grad=True, dtype=torch.float)
-        self.Z = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=Z_size), requires_grad=True, dtype=torch.float)
+        self.X = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=X_size), requires_grad=True, dtype=torch.float).to(self.device)
+        self.Y = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=Y_size), requires_grad=True, dtype=torch.float).to(self.device)
+        self.Z = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=Z_size), requires_grad=True, dtype=torch.float).to(self.device)
 
         # answer parameters
-        self.R = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=R_size), requires_grad=True, dtype=torch.float)
-        self.K = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=K_size), requires_grad=True, dtype=torch.float)
+        self.R = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=R_size), requires_grad=True, dtype=torch.float).to(self.device)
+        self.K = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=K_size), requires_grad=True, dtype=torch.float).to(self.device)
 
     def forward(self, E_s, new_story=True):
         """
@@ -57,5 +58,5 @@ class EntNet(nn.Module):
         return ans
 
     def reset_memory(self):
-        self.H = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=self.H_size), requires_grad=True, dtype=torch.float)
-        self.W = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=self.W_size), requires_grad=True, dtype=torch.float)
+        self.H = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=self.H_size), requires_grad=True, dtype=torch.float).to(self.device)
+        self.W = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=self.W_size), requires_grad=True, dtype=torch.float).to(self.device)

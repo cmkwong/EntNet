@@ -80,7 +80,7 @@ def label_special_token(sentence):
     :param sentence: "Mary journeyed to the hallway."
     :return:         "Mary journeyed to the hallway <FS> "
     """
-    sentence = re.sub('', " <fs> ", sentence)
+    sentence = re.sub('\.', " <fs> ", sentence)
     sentence = re.sub('\?', " <q> ", sentence)
     return sentence
 
