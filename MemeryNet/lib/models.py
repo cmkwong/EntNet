@@ -12,21 +12,23 @@ class EntNet(nn.Module):
         self.device = device
 
         # embedding parameters
-        self.F = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=input_size), requires_grad=True, dtype=torch.float).to(self.device)
-
-        # dynamic memory
-        self.H = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=H_size), requires_grad=True, dtype=torch.float).to(self.device)
-        self.W = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=W_size), requires_grad=True, dtype=torch.float).to(self.device)
-
-        # shared parameters
-        self.X = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=X_size), requires_grad=True, dtype=torch.float).to(self.device)
-        self.Y = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=Y_size), requires_grad=True, dtype=torch.float).to(self.device)
-        self.Z = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=Z_size), requires_grad=True, dtype=torch.float).to(self.device)
-
-        # answer parameters
-        self.R = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=R_size), requires_grad=True, dtype=torch.float).to(self.device)
-        self.K = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=K_size), requires_grad=True, dtype=torch.float).to(self.device)
-
+        self.params = nn.ParameterDict({
+            'F': nn.Parameter(nn.init.normal_(torch.empty(input_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+    
+            # dynamic memory
+            'H': nn.Parameter(nn.init.normal_(torch.empty(H_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+            'W': nn.Parameter(nn.init.normal_(torch.empty(W_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+    
+            # shared parameters
+            'X': nn.Parameter(nn.init.normal_(torch.empty(X_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+            'Y': nn.Parameter(nn.init.normal_(torch.empty(Y_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+            'Z': nn.Parameter(nn.init.normal_(torch.empty(Z_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+    
+            # answer parameters
+            'R': nn.Parameter(nn.init.normal_(torch.empty(R_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1)),
+            'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float), mean=0.0, std=0.1))
+        }).to(self.device)
+        
     def forward(self, E_s, new_story=True):
         """
         k = sentence length
@@ -37,12 +39,12 @@ class EntNet(nn.Module):
         if new_story:
             self.reset_memory()
         for E in E_s:
-            # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)                                 # (64*k)
-            s = torch.mul(self.F, E).sum(dim=1).unsqueeze(1)                                                # (64*1)
-            G = nn.Sigmoid()((torch.mm(s.t(), self.H) + torch.mm(s.t(), self.W)))                           # (1*m)
-            new_H = nn.Tanh()(torch.mm(self.X, self.H) + torch.mm(self.Y, self.W) + torch.mm(self.Z, s))    # (64*m)
-            self.H = self.H + torch.mul(G, new_H)                                                           # (64*m)
-            self.H = self.H / LA.norm(self.H, 2)                                                            # (64*m)
+            # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
+            s = torch.mul(self.params['F'].data, E).sum(dim=1).unsqueeze(1)  # (64*1)
+            G = nn.Sigmoid()((torch.mm(s.t(), self.params['H'].data) + torch.mm(s.t(), self.params['W'].data)))   # (1*m)
+            new_H = nn.Tanh()(torch.mm(self.params['X'].data, self.params['H'].data) + torch.mm(self.params['Y'].data, self.params['W'].data) + torch.mm(self.params['Z'].data, s))  # (64*m)
+            self.params['H'].data = self.params['H'].data + torch.mul(G, new_H)   # (64*m)
+            self.params['H'].data = self.params['H'].data / LA.norm(self.params['H'].data, 2)  # (64*m)
         return True
 
     def answer(self, Q):
@@ -50,13 +52,14 @@ class EntNet(nn.Module):
         :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
         :return: ans_vector (n,1)
         """
-        q = torch.mul(self.F, Q).sum(dim=1).unsqueeze(1)    # (64*1)
-        p = nn.Softmax(dim=1)(torch.mm(q.t(), self.H))           # (1*m)
-        u = torch.mul(p, self.H).sum(dim=1).unsqueeze(1)    # (64*1)
-        y = torch.mm(self.R, nn.Sigmoid()(q + torch.mm(self.K, u))) # (k,1)
+        Q.requires_grad_()
+        q = torch.mul(self.params['F'].data, Q).sum(dim=1).unsqueeze(1)    # (64*1)
+        p = nn.Softmax(dim=1)(torch.mm(q.t(), self.params['H'].data))           # (1*m)
+        u = torch.mul(p, self.params['H'].data).sum(dim=1).unsqueeze(1)    # (64*1)
+        y = torch.mm(self.params['R'].data, nn.Sigmoid()(q + torch.mm(self.params['K'].data, u))) # (k,1)
         ans = nn.Softmax(dim=0)(y)
         return ans
 
     def reset_memory(self):
-        self.H = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=self.H_size), requires_grad=True, dtype=torch.float).to(self.device)
-        self.W = torch.tensor(data=np.random.normal(loc=0.0, scale=0.1, size=self.W_size), requires_grad=True, dtype=torch.float).to(self.device)
+        self.params['H'].data = nn.init.normal_(self.params['H'].data).to(self.device)
+        self.params['W'].data = nn.init.normal_(self.params['W'].data).to(self.device)
