@@ -40,11 +40,11 @@ class EntNet(nn.Module):
             self.reset_memory()
         for E in E_s:
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
-            s = torch.mul(self.params['F'].data, E).sum(dim=1).unsqueeze(1)  # (64*1)
-            G = nn.Sigmoid()((torch.mm(s.t(), self.params['H'].data) + torch.mm(s.t(), self.params['W'].data)))   # (1*m)
-            new_H = nn.Tanh()(torch.mm(self.params['X'].data, self.params['H'].data) + torch.mm(self.params['Y'].data, self.params['W'].data) + torch.mm(self.params['Z'].data, s))  # (64*m)
-            self.params['H'].data = self.params['H'].data + torch.mul(G, new_H)   # (64*m)
-            self.params['H'].data = self.params['H'].data / LA.norm(self.params['H'].data, 2)  # (64*m)
+            s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
+            G = nn.Sigmoid()((torch.mm(s.t(), self.params['H']) + torch.mm(s.t(), self.params['W'])))   # (1*m)
+            new_H = nn.Tanh()(torch.mm(self.params['X'], self.params['H'].data) + torch.mm(self.params['Y'], self.params['W']) + torch.mm(self.params['Z'], s))  # (64*m)
+            self.params['H'].data = self.params['H'] + torch.mul(G, new_H)   # (64*m)
+            self.params['H'].data = self.params['H'] / LA.norm(self.params['H'], 2)  # (64*m)
         return True
 
     def answer(self, Q):
@@ -53,13 +53,13 @@ class EntNet(nn.Module):
         :return: ans_vector (n,1)
         """
         Q.requires_grad_()
-        q = torch.mul(self.params['F'].data, Q).sum(dim=1).unsqueeze(1)    # (64*1)
-        p = nn.Softmax(dim=1)(torch.mm(q.t(), self.params['H'].data))           # (1*m)
-        u = torch.mul(p, self.params['H'].data).sum(dim=1).unsqueeze(1)    # (64*1)
-        y = torch.mm(self.params['R'].data, nn.Sigmoid()(q + torch.mm(self.params['K'].data, u))) # (k,1)
-        ans = nn.Softmax(dim=0)(y)
+        q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)    # (64*1)
+        p = nn.Softmax(dim=1)(torch.mm(q.t(), self.params['H']))           # (1*m)
+        u = torch.mul(p, self.params['H']).sum(dim=1).unsqueeze(1)    # (64*1)
+        ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u))) # (k,1)
+        # ans = nn.Softmax(dim=0)(y)
         return ans
 
     def reset_memory(self):
-        self.params['H'].data = nn.init.normal_(self.params['H'].data).to(self.device)
-        self.params['W'].data = nn.init.normal_(self.params['W'].data).to(self.device)
+        self.params['H'].data = nn.init.normal_(self.params['H']).to(self.device)
+        self.params['W'].data = nn.init.normal_(self.params['W']).to(self.device)

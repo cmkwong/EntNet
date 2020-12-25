@@ -12,4 +12,4 @@ class Loss_Calculator(nn.Module):
         :return: torch.tensor(scalar)
         """
         loss = torch.mm(predict.t(), ans).sigmoid().log().squeeze(dim=0)
-        return loss
+        return -loss
