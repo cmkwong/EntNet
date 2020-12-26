@@ -5,18 +5,29 @@ import torch.optim as optim
 import os
 from codes.common_cmk import funcs
 import re
+from datetime import datetime
+from torch.utils.tensorboard import SummaryWriter
 
-DATA_PATH = "/home/chris/projects/201119_EntNet/tasks_1-20_v1-2/en"
+# get the now time
+now = datetime.now()
+dt_string = now.strftime("%y%m%d_%H%M%S")
+VERSION = 1
+
+MAIN_PATH = "/home/chris/projects/201119_EntNet/docs/"
+DATA_PATH = MAIN_PATH + "tasks_1-20_v1-2/en"
 FILE_NAME = "qa1_single-supporting-fact_train.txt"
-# for Embedding
-SAVE_EMBED_PATH = "/home/chris/projects/201119_EntNet/docs/embedding"
+# for Embedding params
+SAVE_EMBED_PATH = MAIN_PATH + str(VERSION) + "/embedding"
 EMBED_FILE = "checkpoint-Epoch-{}.data".format(6000)
-# for EntNet
-SAVE_EntNET_PATH = "/home/chris/projects/201119_EntNet/docs/entNet_weights"
-EntNET_FILE = "checkpoint-entNet-Epoch-{}.data".format(200)
+# for EntNet params
+SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
+EntNET_FILE = "checkpoint-entNet-Epoch-{}.data".format(800)
+# for run file to monitor progress in tensorboard
+RUNS_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/" + dt_string
+
 DEVICE = "cuda"
-SAVE_EPOCH = 10
-LOAD_NET = True
+SAVE_EPOCH = 50
+LOAD_NET = False
 
 # Load the embedding
 print("Loading net params...")
@@ -57,8 +68,11 @@ else:
 optimizer = optim.Adam(entNet.parameters(), lr=0.1)
 criterion = criterions.Loss_Calculator()
 
+writer = SummaryWriter(log_dir=RUNS_SAVE_PATH, comment="EntNet")
+step = 0
 while True:
-    step = 1
+    q_count = 0
+    correct = 0
     losses = 0
     for E_s, Q, ans_vector, ans, new_story in data.generate(embedding, token_stories, token_answers, word2int, fixed_length=PAD_MAX_LENGTH, device=DEVICE):
         entNet.forward(E_s, new_story=new_story)
@@ -67,13 +81,15 @@ while True:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        losses += loss.item()
+        losses += loss.detach().cpu().item()
 
         # checking the similarity
         most_similarity_ans = funcs.get_most_similar_vectors_pos(embedding_arr, predicted_vector.detach().cpu().numpy(), k=5)
+        if most_similarity_ans[0] == ans:
+            correct += 1
 
-        if step % 100 == 0:
-            print("Predicted ans: {}, Answer: {}".format(most_similarity_ans, ans))
+        # if step % 50 == 0:
+        #     writer.add_scalar("loss_cmk", loss.detach().cpu().item(), step)
 
         # save the embedding layer
         if EPISODE % SAVE_EPOCH == 0:
@@ -81,7 +97,11 @@ while True:
             with open(os.path.join(SAVE_EntNET_PATH, "checkpoint-entNet-Epoch-{}.data".format(EPISODE)), "wb") as f:
                 torch.save(checkpoint, f)
 
+        q_count += 1
         step += 1
 
-    print("Episode: {}; loss: {}".format(EPISODE, losses/step))
+    episode_loss = losses/q_count
+    print("Episode: {}; loss: {}".format(EPISODE, episode_loss))
+    print("Accuracy: {:.3f}%".format(correct/q_count * 100))
+    writer.add_scalar("loss", episode_loss, step)
     EPISODE += 1
