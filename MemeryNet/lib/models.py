@@ -42,7 +42,7 @@ class EntNet(nn.Module):
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
             s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
             G = nn.Sigmoid()((torch.mm(s.t(), self.params['H']) + torch.mm(s.t(), self.params['W'])))   # (1*m)
-            new_H = nn.Tanh()(torch.mm(self.params['X'], self.params['H'].data) + torch.mm(self.params['Y'], self.params['W']) + torch.mm(self.params['Z'], s))  # (64*m)
+            new_H = nn.Tanh()(torch.mm(self.params['X'], self.params['H']) + torch.mm(self.params['Y'], self.params['W']) + torch.mm(self.params['Z'], s))  # (64*m)
             self.params['H'].data = self.params['H'] + torch.mul(G, new_H)   # (64*m)
             self.params['H'].data = self.params['H'] / LA.norm(self.params['H'], 2)  # (64*m)
         return True
