@@ -58,7 +58,7 @@ def preprocess_story(path, file_name):
 
     return token_stories, token_answers, reasons, int2word, word2int
 
-def generate(embedding, token_stories, token_answers, word2int, fixed_length=6, device="cuda"):
+def generate(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
     """
     :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
     :param token_answers: [ [12,34], ... ]
@@ -72,8 +72,10 @@ def generate(embedding, token_stories, token_answers, word2int, fixed_length=6, 
             E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
             if word2int['<q>'] in sentence:
                 Q = E
-                ans = sentc2e(embedding, token_answers[story_i][Q_count], fixed_length=1, device=device)
-                yield E_s, Q, ans, new_story
+                # acquire the ans
+                ans = token_answers[story_i][Q_count]
+                ans_vector = sentc2e(embedding, ans, fixed_length=1, device=device)
+                yield E_s, Q, ans_vector, ans, new_story
                 # reset after yield
                 new_story = False
                 E_s.clear()
