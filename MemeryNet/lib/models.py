@@ -44,7 +44,8 @@ class EntNet(nn.Module):
             G = nn.Sigmoid()((torch.mm(s.t(), self.params['H']) + torch.mm(s.t(), self.params['W'])))   # (1*m)
             new_H = nn.Tanh()(torch.mm(self.params['X'], self.params['H']) + torch.mm(self.params['Y'], self.params['W']) + torch.mm(self.params['Z'], s))  # (64*m)
             self.params['H'].data = self.params['H'] + torch.mul(G, new_H)   # (64*m)
-            self.params['H'].data = self.params['H'] / LA.norm(self.params['H'], 2)  # (64*m)
+            self.unit_params('H', dim=0) # (64*m)
+            # self.params['H'].data = self.params['H'] / LA.norm(self.params['H'], ord=2, dim=0).unsqueeze(0)  # (64*m)
         return True
 
     def answer(self, Q):
@@ -56,6 +57,7 @@ class EntNet(nn.Module):
         q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)    # (64*1)
         p = nn.Softmax(dim=1)(torch.mm(q.t(), self.params['H']))           # (1*m)
         u = torch.mul(p, self.params['H']).sum(dim=1).unsqueeze(1)    # (64*1)
+        self.unit_params('R', dim=1)
         ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u))) # (k,1)
         # ans = nn.Softmax(dim=0)(y)
         return ans
@@ -63,3 +65,7 @@ class EntNet(nn.Module):
     def reset_memory(self):
         self.params['H'].data = nn.init.normal_(self.params['H']).to(self.device)
         self.params['W'].data = nn.init.normal_(self.params['W']).to(self.device)
+
+    def unit_params(self, name, dim):
+        magnitude = self.params[name].data.detach().pow(2).sum(dim=dim).sqrt().unsqueeze(dim=dim)
+        self.params[name].data = self.params[name] / magnitude

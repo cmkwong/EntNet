@@ -15,34 +15,34 @@ VERSION = 1
 
 MAIN_PATH = "/home/chris/projects/201119_EntNet/docs/"
 DATA_PATH = MAIN_PATH + "tasks_1-20_v1-2/en"
-FILE_NAME = "qa1_single-supporting-fact_train.txt"
+TRAIN_SET_NAME = "qa1_single-supporting-fact_train.txt"
+TEST_SET_NAME = "qa1_single-supporting-fact_test.txt"
+
 # for Embedding params
 SAVE_EMBED_PATH = MAIN_PATH + str(VERSION) + "/embedding"
-EMBED_FILE = "checkpoint-Epoch-{}.data".format(6000)
+EMBED_FILE = "checkpoint-Epoch-{}-.data".format(6000)
+INT2WORD = "int2word.txt"
+WORD2INT = "word2int.txt"
+
 # for EntNet params
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
 EntNET_FILE = "checkpoint-entNet-Epoch-{}.data".format(800)
+
 # for run file to monitor progress in tensorboard
-RUNS_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/" + dt_string
+TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/" + dt_string
 
 DEVICE = "cuda"
 SAVE_EPOCH = 50
+TEST_EPOCH = 5
 LOAD_NET = False
 
-# Load the embedding
-print("Loading net params...")
-with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE), "rb") as f:
-    checkpoint = torch.load(f)
-weights = checkpoint['state_dict']['in_embed.weight']
-embedding = nn.Embedding.from_pretrained(weights)
-embedding_arr = embedding.weight.data.cpu().detach().numpy()
-print("Successful!")
-
-# Load the story text file
-token_stories, token_answers, token_reasons, int2word, word2int = data.preprocess_story(path=DATA_PATH, file_name=FILE_NAME)
+# Read the token_count, int2word, word2int
+SkipGram_Net = data.load_file_from_SkipGram(SAVE_EMBED_PATH, EMBED_FILE, INT2WORD, WORD2INT)
+Train = data.translate_story_into_token(DATA_PATH, TRAIN_SET_NAME, SkipGram_Net.word2int)
+Test = data.translate_story_into_token(DATA_PATH, TEST_SET_NAME, SkipGram_Net.word2int)
 
 # Load the model
-EMBED_SIZE = weights.size()[1] # 64
+EMBED_SIZE = SkipGram_Net.weights.size()[1] # 64
 PAD_MAX_LENGTH = 10
 M_SLOTS = 20
 entNet = models.EntNet(input_size=(EMBED_SIZE,PAD_MAX_LENGTH),
@@ -65,16 +65,16 @@ else:
     EPISODE = 1
 
 # optimizer
-optimizer = optim.Adam(entNet.parameters(), lr=0.1)
+optimizer = optim.Adam(entNet.parameters(), lr=0.01)
 criterion = criterions.Loss_Calculator()
 
-writer = SummaryWriter(log_dir=RUNS_SAVE_PATH, comment="EntNet")
+writer = SummaryWriter(log_dir=TENSORBOARD_SAVE_PATH, comment="EntNet")
 step = 0
 while True:
-    q_count = 0
-    correct = 0
-    losses = 0
-    for E_s, Q, ans_vector, ans, new_story in data.generate(embedding, token_stories, token_answers, word2int, fixed_length=PAD_MAX_LENGTH, device=DEVICE):
+    q_count, correct, losses = 0,0,0
+    entNet.train()
+    for E_s, Q, ans_vector, ans, new_story in data.generate(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
+                                                            fixed_length=PAD_MAX_LENGTH, device=DEVICE):
         entNet.forward(E_s, new_story=new_story)
         predicted_vector = entNet.answer(Q)
         loss = criterion(predicted_vector, ans_vector)
@@ -84,12 +84,9 @@ while True:
         losses += loss.detach().cpu().item()
 
         # checking the similarity
-        most_similarity_ans = funcs.get_most_similar_vectors_pos(embedding_arr, predicted_vector.detach().cpu().numpy(), k=5)
+        most_similarity_ans = funcs.get_most_similar_vectors_pos(SkipGram_Net.embedding_arr, predicted_vector.detach().cpu().numpy(), k=5)
         if most_similarity_ans[0] == ans:
             correct += 1
-
-        # if step % 50 == 0:
-        #     writer.add_scalar("loss_cmk", loss.detach().cpu().item(), step)
 
         # save the embedding layer
         if EPISODE % SAVE_EPOCH == 0:
@@ -100,8 +97,28 @@ while True:
         q_count += 1
         step += 1
 
-    episode_loss = losses/q_count
-    print("Episode: {}; loss: {}".format(EPISODE, episode_loss))
-    print("Accuracy: {:.3f}%".format(correct/q_count * 100))
-    writer.add_scalar("loss", episode_loss, step)
+    if EPISODE % TEST_EPOCH == 0:
+        test_q_count, test_correct, test_losses = 0,0,0
+        entNet.eval()
+        for E_s, Q, ans_vector, ans, new_story in data.generate(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
+                                                                fixed_length=PAD_MAX_LENGTH, device=DEVICE):
+            entNet.forward(E_s, new_story=new_story)
+            predicted_vector = entNet.answer(Q)
+            loss = criterion(predicted_vector, ans_vector)
+            test_losses += loss.detach().cpu().item()
+
+            # checking the similarity
+            most_similarity_ans = funcs.get_most_similar_vectors_pos(SkipGram_Net.embedding_arr, predicted_vector.detach().cpu().numpy(), k=5)
+            if most_similarity_ans[0] == ans:
+                test_correct += 1
+
+            test_q_count += 1
+        test_mean_loss = test_losses / test_q_count
+        print("Test Mean Loss: {}".format(test_mean_loss))
+        print("Test Accuracy: {:.3f}%".format(test_correct / test_q_count * 100))
+
+    episode_mean_loss = losses / q_count
+    print("Episode: {}; loss: {}".format(EPISODE, episode_mean_loss))
+    print("Accuracy: {:.3f}%".format(correct / q_count * 100))
+    writer.add_scalar("loss", episode_mean_loss, step)
     EPISODE += 1

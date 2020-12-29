@@ -1,21 +1,26 @@
 from lib import data, models, criterions
+from codes.common_cmk import readFile
 import os
 import torch.optim as optim
 import torch
 
-DATA_PATH = "/home/chris/projects/EntNet201119/tasks_1-20_v1-2/en"
+DATA_PATH = "/home/chris/projects/201119_EntNet/docs/tasks_1-20_v1-2/en"
 FILE_NAME = "qa1_single-supporting-fact_train.txt"
-SAVE_PATH = "/home/chris/projects/EntNet201119/docs/embedding"
+SAVE_PATH = "/home/chris/projects/201119_EntNet/docs/1/embedding"
 NET_FILE = "checkpoint-Epoch-{}.data".format(6000)
 SAVE_EPOCH = 1000
 PRINT_EVERY = 500
-LOAD_NET = True
+LOAD_NET = False
 
 BATCH_SIZE = 64
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # preprocess the story from txt file
 token_stories, answers, reasons, token_count, int2word, word2int, word_stories = data.preprocess_story(DATA_PATH, FILE_NAME)
+# write the txt to store the word2int and int2word
+readFile.write_dict(token_count, SAVE_PATH, "token_count.txt")
+readFile.write_dict(int2word, SAVE_PATH, "int2word.txt")
+readFile.write_dict(word2int, SAVE_PATH, "word2int.txt")
 
 # combined into one list
 words = [word for story in token_stories for sentc in story for word in sentc]

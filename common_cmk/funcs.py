@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+import torch.nn as nn
 
 def get_most_similar_vectors_pos(reference_vectors, vector, k):
     """
@@ -12,3 +14,21 @@ def get_most_similar_vectors_pos(reference_vectors, vector, k):
     sorted_similarities_list = list(np.argsort(similarities)[-k:]) # [float] * k
     sorted_similarities_list.reverse()
     return sorted_similarities_list
+
+def unitVector_2d(tensors):
+    """
+    :param tensors: torch.Tensor(size=(n,m))
+    :return: return normalized torch.Tensor(size=(n,m))
+    """
+    magnitude = tensors.pow(2).sum(dim=1).sqrt().unsqueeze(1)
+    unit_tensors = tensors / magnitude
+    return unit_tensors
+
+def unitVector_3d(tensors):
+    """
+    :param tensors: torch.Tensor(size=(b,n,m))
+    :return: return normalized torch.Tensor(size=(b,n,m))
+    """
+    magnitude = tensors.pow(2).sum(dim=2).sqrt().unsqueeze(2)
+    unit_tensors = tensors / magnitude
+    return unit_tensors

@@ -1,7 +1,7 @@
 from collections import Counter
 import numpy as np
 import random
-from ...common_cmk import readFile
+from codes.common_cmk import readFile
 
 
 def filter_out_word_from_sentcs(word_sentcs, token_count, rare_word_threshold=5):
@@ -58,7 +58,7 @@ def word_to_int(words, word2int):
     """
     return [word2int[word] for word in words]
 
-def preprocess_story(path, file_name):
+def preprocess_story(path, file_name, unknown_rate=0.01, unknown_label="<ukn>"):
 
     # read file
     raw_stories, answers, reasons = readFile.read_story(path, file_name)
@@ -99,6 +99,12 @@ def preprocess_story(path, file_name):
 
     # label the word as int
     token_stories = [readFile.label_word_as_int_token(word_story, word2int) for word_story in word_stories]
+
+    # add the <ukn> in token_count, int2word and word2int for unknown word
+    unknown_count = int(sum(token_count.values()) * unknown_rate)
+    token_count[unknown_label] = unknown_count
+    int2word[len(token_count)-1] = unknown_label
+    word2int[unknown_label] = len(token_count)-1
 
     return token_stories, answers, reasons, token_count, int2word, word2int, word_stories
 
@@ -149,4 +155,3 @@ def get_batches(words, batch_size, window_size=3):
             y.extend(batch_y)
             x.extend([batch_x] * len(batch_y))
         yield x, y
-

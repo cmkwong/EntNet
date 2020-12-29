@@ -1,6 +1,9 @@
 import torch
+import torch.nn as nn
 from collections import Counter
-from codes.common_cmk import readFile
+from codes.common_cmk import readFile, funcs
+import collections
+import os
 
 def sentc2e(embedding, sentc_ints, fixed_length=6, device="cuda"):
     """
@@ -24,7 +27,9 @@ def sentc2e(embedding, sentc_ints, fixed_length=6, device="cuda"):
 # sentc_ints = [20,4,1,2]
 # e = sentc2e(embedding, sentc_ints, 10)
 
-def preprocess_story(path, file_name):
+def preprocess_story_Discard(path, file_name):
+
+    Data = collections.namedtuple("Data", ["token_stories", "token_answers", "reasons", "int2word", "word2int"])
 
     # read file
     raw_stories, answers, reasons = readFile.read_story(path, file_name)
@@ -43,11 +48,11 @@ def preprocess_story(path, file_name):
         token_count = token_count + tc
 
     # create word2int and int2word
-    int2word, word2int = readFile.create_lookup_table(token_count, reverse=True)
+    Data.int2word, Data.word2int = readFile.create_lookup_table(token_count, reverse=True)
 
     # label the word as int
-    token_stories = [readFile.label_word_as_int_token(word_story, word2int) for word_story in word_stories]
-    token_answers = readFile.label_word_as_int_token(answers, word2int)
+    Data.token_stories = [readFile.label_word_as_int_token(word_story, Data.word2int) for word_story in word_stories]
+    Data.token_answers = readFile.label_word_as_int_token(answers, Data.word2int)
 
     # separate the facts and questions
     # token_facts, token_questions = [], []
@@ -55,8 +60,50 @@ def preprocess_story(path, file_name):
     #     token_fact, token_question = readFile.target_detach(token_story, target_label=word2int['<q>'])
     #     token_facts.append(token_fact)
     #     token_questions.append(token_question)
+    return Data
 
-    return token_stories, token_answers, reasons, int2word, word2int
+def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
+
+    SkipGram_Net = collections.namedtuple("SkipGram_Net", ["weights", "embedding", "embedding_arr", "token_count", "int2word", "word2int"])
+
+    # Load the embedding
+    print("Loading net params ...")
+    with open(os.path.join(path, embedding_file), "rb") as f:
+        checkpoint = torch.load(f)
+    weights = checkpoint['state_dict']['in_embed.weight']
+    SkipGram_Net.weights = funcs.unitVector_2d(weights) # normalize into unit vector
+    SkipGram_Net.embedding = nn.Embedding.from_pretrained(SkipGram_Net.weights)
+    SkipGram_Net.embedding_arr = SkipGram_Net.embedding.weight.data.cpu().detach().numpy()
+    print("Successful!")
+
+    # load the int2word and word2int files
+    print("Loading word2int and int2word files ...")
+    SkipGram_Net.int2word = readFile.read_dict(path, int2word_file)
+    SkipGram_Net.word2int = readFile.read_dict(path, word2int_file)
+    print("Successful!")
+
+    return SkipGram_Net
+
+def translate_story_into_token(path, file_name, word2int):
+
+    Data = collections.namedtuple("Train_Data", ["token_stories", "token_answers", "reasons"])
+
+    # read file
+    raw_stories, answers, Data.reasons = readFile.read_story(path, file_name)
+
+    # label special charactor
+    stories = []
+    for story in raw_stories:
+        stories.append([readFile.label_special_token(sentc) for sentc in story])
+
+    # tokenize into word from the sentence
+    word_stories = [readFile.tokenize_sentences(story) for story in stories]
+
+    # label the word as int
+    Data.token_stories = [readFile.label_word_as_int_token(word_story, word2int) for word_story in word_stories]
+    Data.token_answers = readFile.label_word_as_int_token(answers, word2int)
+
+    return Data
 
 def generate(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
     """

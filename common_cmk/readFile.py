@@ -135,7 +135,12 @@ def label_word_as_int_token(word_sentcs, word2int):
     """
     token_sentcs = []
     for sentc in word_sentcs:
-        token_sentc = [word2int[word] for word in sentc]
+        token_sentc = []
+        for word in sentc:
+            if word in word2int.keys():
+                token_sentc.append(word2int[word])
+            else:
+                token_sentc.append(len(word2int)-1)
         token_sentcs.append(token_sentc)
     return token_sentcs
 
@@ -155,3 +160,35 @@ def target_detach(int_tokens, target_label):
             target.append(int_tokens.pop(pos))
             pop_count += 1
     return int_tokens, target
+
+def write_dict(dictionary, path, file_name):
+    """
+    :param dictionary: dict: {X: Y}
+    :param path: str
+    :param file_name: str
+    :return: boolean
+    """
+    full_path = path + '/' + file_name
+    with open(full_path, 'w') as f:
+        for key, value in dictionary.items():
+            f.write(str(key) + ',' + str(value) + '\n')
+    return True
+
+def read_dict(path, file_name):
+    """
+    Can read the txt file: 'A',2\n'B',3,\n ... OR 2,'A'\n3,'B'\n ...
+    :param path: str
+    :param file_name: str
+    :return: mydict: {X: Y} where X and Y can be str or int
+    """
+    mydict = {}
+    full_path = path + '/' + file_name
+    with open(full_path, 'r') as f:
+        for line in f:
+            key, value = line.strip().split(',')
+            if key.isdigit():
+                key = int(key)
+            if value.isdigit():
+                value = int(value)
+            mydict[key] = value
+    return mydict
