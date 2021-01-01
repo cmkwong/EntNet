@@ -73,10 +73,10 @@ step = 0
 while True:
     q_count, correct, losses = 0,0,0
     entNet.train()
-    for E_s, Q, ans_vector, ans, new_story in data.generate(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
+    for E_s, Q, ans_vector, ans, new_story, end_story in data.generate_2(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
                                                             fixed_length=PAD_MAX_LENGTH, device=DEVICE):
-        entNet.forward(E_s, new_story=new_story)
-        predicted_vector = entNet.answer(Q)
+        predicted_vector = entNet.forward(E_s, Q, new_story=new_story)
+        # predicted_vector = entNet.answer(Q)
         loss = criterion(predicted_vector, ans_vector)
         optimizer.zero_grad()
         loss.backward()
@@ -100,10 +100,10 @@ while True:
     if EPISODE % TEST_EPOCH == 0:
         test_q_count, test_correct, test_losses = 0,0,0
         entNet.eval()
-        for E_s, Q, ans_vector, ans, new_story in data.generate(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
+        for E_s, Q, ans_vector, ans, new_story, end_story in data.generate_2(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
                                                                 fixed_length=PAD_MAX_LENGTH, device=DEVICE):
-            entNet.forward(E_s, new_story=new_story)
-            predicted_vector = entNet.answer(Q)
+            predicted_vector= entNet.forward(E_s, Q, new_story=new_story)
+            # predicted_vector = entNet.answer(Q)
             loss = criterion(predicted_vector, ans_vector)
             test_losses += loss.detach().cpu().item()
 

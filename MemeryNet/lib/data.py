@@ -71,7 +71,7 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
     with open(os.path.join(path, embedding_file), "rb") as f:
         checkpoint = torch.load(f)
     weights = checkpoint['state_dict']['in_embed.weight']
-    SkipGram_Net.weights = funcs.unitVector_2d(weights) # normalize into unit vector
+    SkipGram_Net.weights = funcs.unitVector_2d(weights, dim=0) # normalize into unit vector
     SkipGram_Net.embedding = nn.Embedding.from_pretrained(SkipGram_Net.weights)
     SkipGram_Net.embedding_arr = SkipGram_Net.embedding.weight.data.cpu().detach().numpy()
     print("Successful!")
@@ -123,6 +123,36 @@ def generate(embedding, token_stories, token_answers, word2int, fixed_length=10,
                 ans = token_answers[story_i][Q_count]
                 ans_vector = sentc2e(embedding, ans, fixed_length=1, device=device)
                 yield E_s, Q, ans_vector, ans, new_story
+                # reset after yield
+                new_story = False
+                E_s.clear()
+                Q_count += 1
+            else:
+                E_s.append(E)
+
+def generate_2(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
+    """
+    :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
+    :param token_answers: [ [12,34], ... ]
+    :return: [ torch.tensor(size=(n,fixed_length)), ... ], torch.tensor(size=(n,fixed_length)), torch_tensor(size=(n,1)), Boolean
+    """
+    for story_i, story in enumerate(token_stories):
+        new_story = True
+        Q_count = 0
+        E_s = []
+        story_len = len(story)
+        for sentc_i, sentence in enumerate(story):
+            if sentc_i == story_len - 1:
+                end_story = True
+            else:
+                end_story = False
+            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            if word2int['<q>'] in sentence:
+                Q = E
+                # acquire the ans
+                ans = token_answers[story_i][Q_count]
+                ans_vector = sentc2e(embedding, ans, fixed_length=1, device=device)
+                yield E_s, Q, ans_vector, ans, new_story, end_story
                 # reset after yield
                 new_story = False
                 E_s.clear()
