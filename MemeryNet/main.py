@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 # get the now time
 now = datetime.now()
 dt_string = now.strftime("%y%m%d_%H%M%S")
-VERSION = 1
+VERSION = 2
 
 MAIN_PATH = "/home/chris/projects/201119_EntNet/docs/"
 DATA_PATH = MAIN_PATH + "tasks_1-20_v1-2/en"
@@ -26,7 +26,7 @@ WORD2INT = "word2int.txt"
 
 # for EntNet params
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
-EntNET_FILE = "checkpoint-entNet-Epoch-{}.data".format(800)
+EntNET_FILE = "checkpoint-entNet-V{}-Epoch-{}.data".format(1, 800)
 
 # for run file to monitor progress in tensorboard
 TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/" + dt_string
@@ -75,8 +75,8 @@ while True:
     entNet.train()
     for E_s, Q, ans_vector, ans, new_story, end_story in data.generate_2(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
                                                             fixed_length=PAD_MAX_LENGTH, device=DEVICE):
-        predicted_vector = entNet.forward(E_s, Q, new_story=new_story)
-        # predicted_vector = entNet.answer(Q)
+        entNet.forward(E_s, Q, new_story=new_story)
+        predicted_vector = entNet.answer(Q)
         loss = criterion(predicted_vector, ans_vector)
         optimizer.zero_grad()
         loss.backward()
@@ -91,7 +91,7 @@ while True:
         # save the embedding layer
         if EPISODE % SAVE_EPOCH == 0:
             checkpoint = {"state_dict": entNet.state_dict()}
-            with open(os.path.join(SAVE_EntNET_PATH, "checkpoint-entNet-Epoch-{}.data".format(EPISODE)), "wb") as f:
+            with open(os.path.join(SAVE_EntNET_PATH, "checkpoint-entNet-V{}-Epoch-{}.data".format(VERSION, EPISODE)), "wb") as f:
                 torch.save(checkpoint, f)
 
         q_count += 1
@@ -102,8 +102,8 @@ while True:
         entNet.eval()
         for E_s, Q, ans_vector, ans, new_story, end_story in data.generate_2(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
                                                                 fixed_length=PAD_MAX_LENGTH, device=DEVICE):
-            predicted_vector= entNet.forward(E_s, Q, new_story=new_story)
-            # predicted_vector = entNet.answer(Q)
+            entNet.forward(E_s, Q, new_story=new_story)
+            predicted_vector = entNet.answer(Q)
             loss = criterion(predicted_vector, ans_vector)
             test_losses += loss.detach().cpu().item()
 

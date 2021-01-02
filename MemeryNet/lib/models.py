@@ -44,6 +44,20 @@ class EntNet(nn.Module):
             self.H = funcs.unitVector_2d(self.H + torch.mul(G, new_H), dim=0)  # (64*m)
 
         # answer the question
+        # Q.requires_grad_()
+        # q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
+        # p = nn.Softmax(dim=1)(torch.mm(q.t(), self.H))  # (1*m)
+        # u = torch.mul(p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
+        # self.unit_params('R', dim=1)
+        # ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u)))  # (k,1)
+        # return ans
+
+    def answer(self, Q):
+        """
+        :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
+        :return: ans_vector (n,1)
+        """
+        # answer the question
         Q.requires_grad_()
         q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
         p = nn.Softmax(dim=1)(torch.mm(q.t(), self.H))  # (1*m)
@@ -51,20 +65,6 @@ class EntNet(nn.Module):
         self.unit_params('R', dim=1)
         ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u)))  # (k,1)
         return ans
-
-    # def answer(self, Q):
-    #     """
-    #     :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
-    #     :return: ans_vector (n,1)
-    #     """
-    #     Q.requires_grad_()
-    #     q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)    # (64*1)
-    #     p = nn.Softmax(dim=1)(torch.mm(q.t(), self.params['H']))           # (1*m)
-    #     u = torch.mul(p, self.params['H']).sum(dim=1).unsqueeze(1)    # (64*1)
-    #     self.unit_params('R', dim=1)
-    #     ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u))) # (k,1)
-    #     # ans = nn.Softmax(dim=0)(y)
-    #     return ans
 
     def prepare_hidden_state(self, new_story):
         if new_story:
