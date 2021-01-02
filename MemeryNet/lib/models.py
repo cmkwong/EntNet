@@ -35,11 +35,7 @@ class EntNet(nn.Module):
         :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
         :return: ans_vector (n,1)
         """
-        if new_story:
-            self.reset_memory()
-        else:
-            self.H = self.H.detach()
-            self.W = self.W.detach()
+        self.prepare_hidden_state(new_story)
         for E in E_s:
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
             s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
@@ -70,9 +66,13 @@ class EntNet(nn.Module):
     #     # ans = nn.Softmax(dim=0)(y)
     #     return ans
 
-    def reset_memory(self):
-        self.H = nn.init.normal_(self.H).detach()
-        self.W = nn.init.normal_(self.W).detach()
+    def prepare_hidden_state(self, new_story):
+        if new_story:
+            self.H = nn.init.normal_(self.H).detach()
+            self.W = nn.init.normal_(self.W).detach()
+        else:
+            self.H = self.H.detach()
+            self.W = self.W.detach()
 
     def unit_params(self, name, dim):
         magnitude = self.params[name].data.detach().pow(2).sum(dim=dim).sqrt().unsqueeze(dim=dim)

@@ -33,7 +33,7 @@ TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/" + dt_string
 
 DEVICE = "cuda"
 SAVE_EPOCH = 50
-TEST_EPOCH = 5
+TEST_EPOCH = 10
 LOAD_NET = False
 
 # Read the token_count, int2word, word2int
