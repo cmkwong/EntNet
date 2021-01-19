@@ -1,7 +1,6 @@
 import re
 from collections import Counter
-import numpy as np
-import random
+from codes.common_cmk.config import *
 
 def read_txt_generator(path, file_name):
     full_path = path + '/' + file_name
@@ -32,7 +31,50 @@ def story_start_end(sentence_list):
 
     return story_loc
 
-def read_story(path, file_name):
+def read_as_raw_text(path, file_name):
+    """
+        :param path: String
+        :param file_name: String
+        :return: stories_with_answers =   [   [ "Mary journeyed to the hallway.",
+                                                "Where is Sandra?",
+                                                "bathroom",
+                                                "Where is Peter?",
+                                                "kitchen",
+                                                "..."], ... ]
+                reasons =  [   [7 8], [5 6], ...]
+        """
+    stories_with_answers, reasons = [], []
+    story_with_answer, reason = [], []
+    sentences = []
+    for line in read_txt_generator(path, file_name):
+        line = line.replace('\n', '')
+        sentences.append(line)
+
+    # get the index of start and end of the story
+    story_loc = story_start_end(sentences)
+
+    for start, end in story_loc:
+
+        sentence_slot = sentences[start:end]
+
+        for sentence in sentence_slot:
+            sentence = sentence.split(' ', maxsplit=1)[1] # discard the sentence index
+            if '\t' in sentence:
+                parts = sentence.split('\t')
+                story_with_answer.append(parts[0])  # question
+                story_with_answer.append(parts[1])  # answer
+                reason.append(parts[2])             # reason
+            else:
+                story_with_answer.append(sentence)
+
+        stories_with_answers.append(story_with_answer)
+        reasons.append(reason)
+        # reset the buffer
+        story_with_answer, reason = [], []
+
+    return stories_with_answers, reasons
+
+def read_as_story(path, file_name):
     """
     :param path: String
     :param file_name: String
@@ -51,19 +93,20 @@ def read_story(path, file_name):
         line = line.replace('\n', '')
         sentences.append(line)
 
+    # get the index of start and end of the story
     story_loc = story_start_end(sentences)
 
     for start, end in story_loc:
 
-        sentence_lot = sentences[start:end]
+        sentence_slot = sentences[start:end]
 
-        for sentence in sentence_lot:
-            sentence = sentence.split(' ', maxsplit=1)[1]
+        for sentence in sentence_slot:
+            sentence = sentence.split(' ', maxsplit=1)[1] # discard the sentence index
             if '\t' in sentence:
                 parts = sentence.split('\t')
-                story.append(parts[0])
-                answer.append(parts[1])
-                reason.append(parts[2])
+                story.append(parts[0])  # question
+                answer.append(parts[1]) # answer
+                reason.append(parts[2]) # reason
             else:
                 story.append(sentence)
 
@@ -80,8 +123,9 @@ def label_special_token(sentence):
     :param sentence: "Mary journeyed to the hallway."
     :return:         "Mary journeyed to the hallway <FS> "
     """
-    sentence = re.sub('\.', " <fs> ", sentence)
-    sentence = re.sub('\?', " <q> ", sentence)
+    sentence = re.sub('\.', FULLSTOP, sentence)
+    sentence = re.sub('\?', QUESTION_MARK, sentence)
+    sentence = re.sub(',', COMMA, sentence)
     return sentence
 
 def tokenize_sentences(story):
@@ -171,7 +215,7 @@ def write_dict(dictionary, path, file_name):
     full_path = path + '/' + file_name
     with open(full_path, 'w') as f:
         for key, value in dictionary.items():
-            f.write(str(key) + ',' + str(value) + '\n')
+            f.write(str(key) + '\t\t' + str(value) + '\n')
     return True
 
 def read_dict(path, file_name):

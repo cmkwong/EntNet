@@ -27,12 +27,11 @@ class EntNet(nn.Module):
             'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1))
         })
 
-    def forward(self, E_s, Q, new_story=True):
+    def forward(self, E_s, new_story=True):
         """
         k = sentence length
         m = memory size
         :param E_s: [ torch.tensor = facts in word embeddings ]
-        :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
         :return: ans_vector (n,1)
         """
         self.prepare_hidden_state(new_story)
@@ -42,15 +41,6 @@ class EntNet(nn.Module):
             G = nn.Sigmoid()((torch.mm(s.t(), self.H) + torch.mm(s.t(), self.W)))  # (1*m)
             new_H = nn.Tanh()(torch.mm(self.params['X'], self.H) + torch.mm(self.params['Y'], self.W) + torch.mm(self.params['Z'], s))  # (64*m)
             self.H = funcs.unitVector_2d(self.H + torch.mul(G, new_H), dim=0)  # (64*m)
-
-        # answer the question
-        # Q.requires_grad_()
-        # q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
-        # p = nn.Softmax(dim=1)(torch.mm(q.t(), self.H))  # (1*m)
-        # u = torch.mul(p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
-        # self.unit_params('R', dim=1)
-        # ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u)))  # (k,1)
-        # return ans
 
     def answer(self, Q):
         """

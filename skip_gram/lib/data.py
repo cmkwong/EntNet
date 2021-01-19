@@ -2,6 +2,7 @@ from collections import Counter
 import numpy as np
 import random
 from codes.common_cmk import readFile
+from codes.common_cmk.config import *
 
 
 def filter_out_word_from_sentcs(word_sentcs, token_count, rare_word_threshold=5):
@@ -19,9 +20,9 @@ def filter_out_word_from_sentcs(word_sentcs, token_count, rare_word_threshold=5)
 
 def sub_sampling_from_sentcs(word_sentcs, token_count, sampling_threshold=1e-3):
     """
-    :param sentcs: [["this", "is", "the", "east", "<FS>"], ["where", "is", "east", "<Q>"], ... ]
+    :param sentcs: [["this", "is", "the", "east", "<fs>"], ["where", "is", "east", "<Q>"], ... ]
     :param token_count: {"this": 12, "east": 23,  ...}
-    :return: [["this", "is", "the", "east", "<FS>"], ["where", "is", "east", "<Q>"], ... ]
+    :return: [["this", "is", "the", "east", "<fs>"], ["where", "is", "east", "<Q>"], ... ]
     """
     total_count = sum(token_count.values())
 
@@ -36,12 +37,12 @@ def sub_sampling_from_sentcs(word_sentcs, token_count, sampling_threshold=1e-3):
 
 def sub_sampling_from_sentcs_special(word_sentcs, token_count):
     """
-    :param sentcs: [["this", "is", "the", "east", "<FS>"], ["where", "is", "east", "<Q>"], ... ]
+    :param sentcs: [["this", "is", "the", "east", "<fs>"], ["where", "is", "east", "<Q>"], ... ]
     :param token_count: {"this": 12, "east": 23,  ...}
-    :return: [["this", "is", "the", "east", "<FS>"], ["where", "is", "east", "<Q>"], ... ]
+    :return: [["this", "is", "the", "east", "<fs>"], ["where", "is", "east", "<Q>"], ... ]
     """
     p_drops = {word: 0.0 for word in token_count.keys()}
-    for word in ["is", "to", "the"]:
+    for word in SUBSAMPLE_LIST:
         p_drops[word] = 0.9
 
     sampled_sentcs = []
@@ -50,18 +51,10 @@ def sub_sampling_from_sentcs_special(word_sentcs, token_count):
         sampled_sentcs.append(sampled_sentc)
     return sampled_sentcs
 
-def word_to_int(words, word2int):
-    """
-    :param words: sampled [word]
-    :use: self.word2int
-    :return: [index]
-    """
-    return [word2int[word] for word in words]
-
 def preprocess_story(path, file_name, unknown_rate=0.01, unknown_label="<ukn>"):
 
     # read file
-    raw_stories, answers, reasons = readFile.read_story(path, file_name)
+    raw_stories, reasons = readFile.read_as_raw_text(path, file_name)
 
     # label special charactor
     stories = []
@@ -76,6 +69,7 @@ def preprocess_story(path, file_name, unknown_rate=0.01, unknown_label="<ukn>"):
     for word_story in word_stories:
         tc = readFile.get_token_count_from_sentences(word_story)
         token_count = token_count + tc
+    original_token_count = token_count.copy()
 
     # create word2int and int2word
     int2word, word2int = readFile.create_lookup_table(token_count, reverse=True)
@@ -89,7 +83,7 @@ def preprocess_story(path, file_name, unknown_rate=0.01, unknown_label="<ukn>"):
         tc = readFile.get_token_count_from_sentences(word_story)
         token_count = token_count + tc
 
-    # sample out the frequently word in stories
+    # sample out the frequently word in stories / sample out the specific non-meaning word in stories
     word_stories = [sub_sampling_from_sentcs_special(word_story, token_count) for word_story in word_stories]
     # get the third time token count
     token_count = Counter()
@@ -106,7 +100,7 @@ def preprocess_story(path, file_name, unknown_rate=0.01, unknown_label="<ukn>"):
     int2word[len(token_count)-1] = unknown_label
     word2int[unknown_label] = len(token_count)-1
 
-    return token_stories, answers, reasons, token_count, int2word, word2int, word_stories
+    return token_stories, reasons, token_count, original_token_count, int2word, word2int, word_stories
 
 def get_noise_dist(token_count, reversed=True):
     """
