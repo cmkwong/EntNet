@@ -6,11 +6,11 @@ DT_STRING = now.strftime("%y%m%d_%H%M%S")
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
 # ------------------------------------------------------------------------------------------------------------- #
 
-VERSION = 3
+VERSION = 4
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
-TRAIN_DATA_INDEX = 2
+TRAIN_DATA_INDEX = 4
 
 # control for skip-gram
 SG_LEARNING_RATE = 0.00001
@@ -21,14 +21,17 @@ SG_BATCH_SIZE = 64
 SG_LOAD_NET = False
 
 # control for EntNet
-EntNET_LEARNING_RATE = 0.001
+EntNET_LEARNING_RATE = 0.01
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 100
 EntNet_LOAD_NET = False
 
+M_SLOTS = 20
+PAD_MAX_LENGTH = 10
+
 # Embedding
 EMBED_FILE_FORMAT = "embedding-epoch-{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(6000)     # load weight file
+EMBED_FILE = EMBED_FILE_FORMAT.format(5000)     # load weight file
 
 # EntNet
 EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch-{}.data"    # Save Format

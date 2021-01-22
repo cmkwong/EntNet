@@ -14,11 +14,9 @@ Test = data.translate_story_into_token(DATA_PATH, TEST_SET_NAME[TRAIN_DATA_INDEX
 
 # Load the model
 embed_size = SkipGram_Net.weights.size()[1] # 64
-pad_max_length = 10
-m_slots = 20
-entNet = models.EntNet(input_size=(embed_size, pad_max_length),
-                       H_size=(embed_size, m_slots),
-                       W_size=(embed_size, m_slots),
+entNet = models.EntNet(input_size=(embed_size, PAD_MAX_LENGTH),
+                       H_size=(embed_size, M_SLOTS),
+                       W_size=(embed_size, M_SLOTS),
                        X_size=(embed_size, embed_size),
                        Y_size=(embed_size, embed_size),
                        Z_size=(embed_size, embed_size),
@@ -45,7 +43,7 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
         entNet.train()
         q_count, correct, losses = 0, 0, 0
         for T in data.generate(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
-                                                                fixed_length=pad_max_length, device=DEVICE):
+                                                                fixed_length=PAD_MAX_LENGTH, device=DEVICE):
             entNet.forward(T.E_s, new_story=T.new_story)
             predicted_vector = entNet.answer(T.Q)
             loss = criterion(predicted_vector, T.ans_vector)
@@ -75,7 +73,7 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
             test_q_count, test_correct, test_losses = 0,0,0
             entNet.eval()
             for t in data.generate(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
-                                                                    fixed_length=pad_max_length, device=DEVICE):
+                                                                    fixed_length=PAD_MAX_LENGTH, device=DEVICE):
                 entNet.forward(t.E_s, new_story=t.new_story)
                 predicted_vector = entNet.answer(t.Q)
                 loss = criterion(predicted_vector, t.ans_vector)
