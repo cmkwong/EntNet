@@ -22,8 +22,7 @@ words = [word for story in token_stories for sentc in story for word in sentc]
 noise_dist = torch.from_numpy(data.get_noise_dist(token_count, reversed=True))
 
 # set up the model
-embedding_dim = 64
-model = models.SkipGramNeg(len(token_count), embedding_dim, noise_dist=noise_dist).to(DEVICE)
+model = models.SkipGramNeg(len(token_count), EMBED_SIZE, noise_dist=noise_dist).to(DEVICE)
 
 if SG_LOAD_NET:
     print("Loading net params...")
@@ -77,7 +76,7 @@ while True:
     # save the embedding layer
     if epoch % SG_SAVE_EPOCH == 0 and epoch > 0:
         checkpoint = {"state_dict": model.state_dict()}
-        with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE_FORMAT.format(epoch)), "wb") as f:
+        with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE_FORMAT.format(epoch, EMBED_SIZE)), "wb") as f:
             torch.save(checkpoint, f)
 
     if epoch % SG_WRITE_EPOCH == 0 and epoch > 0:

@@ -14,15 +14,16 @@ Test = data.translate_story_into_token(DATA_PATH, TEST_SET_NAME[TRAIN_DATA_INDEX
 
 # Load the model
 embed_size = SkipGram_Net.weights.size()[1] # 64
-entNet = models.EntNet(input_size=(embed_size, PAD_MAX_LENGTH),
-                       H_size=(embed_size, M_SLOTS),
-                       W_size=(embed_size, M_SLOTS),
-                       X_size=(embed_size, embed_size),
-                       Y_size=(embed_size, embed_size),
-                       Z_size=(embed_size, embed_size),
-                       R_size=(embed_size, embed_size),
-                       K_size=(embed_size, embed_size),
-                       device=DEVICE)
+M_SLOTS = SkipGram_Net.weights.t().size()[1]
+entNet = models.EntNet( W=SkipGram_Net.weights.t(),
+                        input_size=(embed_size, PAD_MAX_LENGTH),
+                        H_size=(embed_size, M_SLOTS),
+                        X_size=(embed_size, embed_size),
+                        Y_size=(embed_size, embed_size),
+                        Z_size=(embed_size, embed_size),
+                        R_size=(embed_size, embed_size),
+                        K_size=(embed_size, embed_size),
+                        device=DEVICE)
 if EntNet_LOAD_NET:
     print("Loading net params...", end=' ')
     with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE), "rb") as f:

@@ -1,6 +1,6 @@
 from datetime import datetime
 now = datetime.now()
-DT_STRING = now.strftime("%y%m%d_%H%M%S")
+DT_STRING = now.strftime("%y%m%d-%H%M%S")
 
 # ------------------------------------------------------------------------------------------------------------- #
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
@@ -10,10 +10,11 @@ VERSION = 4
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
-TRAIN_DATA_INDEX = 2
+TRAIN_DATA_INDEX = 1
 
 # control for skip-gram
 SG_LEARNING_RATE = 0.00001
+EMBED_SIZE = 16
 SG_SAVE_EPOCH = 1000
 SG_PRINT_STEPS = 1000
 SG_WRITE_EPOCH = 1000
@@ -26,12 +27,12 @@ EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 100
 EntNet_LOAD_NET = False
 
-M_SLOTS = 20
+# M_SLOTS = 20
 PAD_MAX_LENGTH = 10
 
 # Embedding
-EMBED_FILE_FORMAT = "embedding-epoch-{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(5000)     # load weight file
+EMBED_FILE_FORMAT = "embedding-epoch-{}-E{}.data"   # Save Format
+EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 16)     # load weight file
 
 # EntNet
 EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch-{}.data"    # Save Format
@@ -101,8 +102,8 @@ SG_RESULTS = "results_epoch-{}.txt"
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
 
 # output runs file for monitoring progress in tensorboard (Skip-Gram / EntNet)
-SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa-" + str(TRAIN_DATA_INDEX) + '_' + DT_STRING
-EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa-" + str(TRAIN_DATA_INDEX) + '_' + DT_STRING
+SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + str(TRAIN_DATA_INDEX) + '_es' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_v' + str(VERSION) + '_t' + DT_STRING
+EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_v' + str(VERSION) + '_t' + DT_STRING
 # tensorboard --logdir ~/projects/201119_EntNet/docs/3/runs --host localhost
 
 # output result.txt for inspection (EntNet)

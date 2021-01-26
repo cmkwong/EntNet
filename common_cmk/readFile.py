@@ -215,7 +215,7 @@ def write_dict(dictionary, path, file_name):
     full_path = path + '/' + file_name
     with open(full_path, 'w') as f:
         for key, value in dictionary.items():
-            f.write(str(key) + '\t\t' + str(value) + '\n')
+            f.write(str(key) + ',' + str(value) + '\n')
     return True
 
 def read_dict(path, file_name):
