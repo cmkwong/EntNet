@@ -71,7 +71,7 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
     with open(os.path.join(path, embedding_file), "rb") as f:
         checkpoint = torch.load(f)
     weights = checkpoint['state_dict']['in_embed.weight']
-    SkipGram_Net.weights = funcs.unitVector_2d(weights, dim=0) # normalize into unit vector
+    SkipGram_Net.weights = funcs.unitVector_2d(weights, dim=1) # normalize into unit vector
     SkipGram_Net.embedding = nn.Embedding.from_pretrained(SkipGram_Net.weights)
     SkipGram_Net.embedding_arr = SkipGram_Net.embedding.weight.data.cpu().detach().numpy()
     print("Successful!")
@@ -251,9 +251,9 @@ class Episode_Tracker:
 
     def append_result_txt(self, type):
         if self.correct_story:
-            file_name = INCORRECT_FILE_NAME.format(type, self.episode)
-        else:
             file_name = CORRECT_FILE_NAME.format(type, self.episode)
+        else:
+            file_name = INCORRECT_FILE_NAME.format(type, self.episode)
         main_path = self.path + '/' + file_name
         with open(main_path, 'a') as f:
             f.write(self.story_with_ans)

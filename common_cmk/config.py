@@ -10,7 +10,7 @@ VERSION = 4
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
-TRAIN_DATA_INDEX = 4
+TRAIN_DATA_INDEX = 2
 
 # control for skip-gram
 SG_LEARNING_RATE = 0.00001
