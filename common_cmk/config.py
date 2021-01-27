@@ -10,11 +10,11 @@ VERSION = 4
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
-TRAIN_DATA_INDEX = 1
+TRAIN_DATA_INDEX = 2
 
 # control for skip-gram
 SG_LEARNING_RATE = 0.00001
-EMBED_SIZE = 16
+EMBED_SIZE = 64
 SG_SAVE_EPOCH = 1000
 SG_PRINT_STEPS = 1000
 SG_WRITE_EPOCH = 1000
@@ -32,7 +32,7 @@ PAD_MAX_LENGTH = 10
 
 # Embedding
 EMBED_FILE_FORMAT = "embedding-epoch-{}-E{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 16)     # load weight file
+EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64)     # load weight file
 
 # EntNet
 EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch-{}.data"    # Save Format
