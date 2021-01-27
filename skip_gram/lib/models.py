@@ -17,13 +17,13 @@ class SkipGramNeg(nn.Module):
 
     def forward_input(self, input_words):
         input_vectors = self.in_embed(input_words)
-        # magnitude = input_vectors.pow(2).sum(dim=1).sqrt().unsqueeze(1).detach()
-        return input_vectors
+        magnitude = input_vectors.pow(2).sum(dim=1).sqrt().unsqueeze(1).detach()
+        return input_vectors / magnitude
 
     def forward_output(self, output_words):
         output_vectors = self.out_embed(output_words)
-        # magnitude = output_vectors.pow(2).sum(dim=1).sqrt().unsqueeze(1).detach()
-        return output_vectors
+        magnitude = output_vectors.pow(2).sum(dim=1).sqrt().unsqueeze(1).detach()
+        return output_vectors / magnitude
 
     def forward_noise(self, batch_size, n_samples):
         """ Generate noise vectors with shape (batch_size, n_samples, n_embed)"""
@@ -36,6 +36,6 @@ class SkipGramNeg(nn.Module):
         noise_words = torch.multinomial(noise_dist, batch_size * n_samples, replacement=True)
         noise_words = noise_words.to("cuda")
         noise_vectors = self.out_embed(noise_words).view(batch_size, n_samples, self.n_embed)
-        # magnitude = noise_vectors.pow(2).sum(dim=2).sqrt().unsqueeze(2).detach()
-        return noise_vectors
+        magnitude = noise_vectors.pow(2).sum(dim=2).sqrt().unsqueeze(2).detach()
+        return noise_vectors / magnitude
 

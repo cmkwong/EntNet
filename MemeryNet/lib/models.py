@@ -52,7 +52,8 @@ class EntNet(nn.Module):
         p = nn.Softmax(dim=1)(torch.mm(q.t(), self.H))  # (1*m)
         u = torch.mul(p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
         self.unit_params('R', dim=1)
-        ans = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u)))  # (k,1)
+        ans_vector = torch.mm(self.params['R'], nn.Sigmoid()(q + torch.mm(self.params['K'], u)))  # (k,1)
+        ans = nn.LogSoftmax(dim=1)(ans_vector.t())
         return ans
 
     def prepare_hidden_state(self, new_story):

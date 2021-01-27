@@ -6,7 +6,7 @@ DT_STRING = now.strftime("%y%m%d-%H%M%S")
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
 # ------------------------------------------------------------------------------------------------------------- #
 
-VERSION = 4
+VERSION = 5
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
@@ -22,12 +22,10 @@ SG_BATCH_SIZE = 64
 SG_LOAD_NET = False
 
 # control for EntNet
-EntNET_LEARNING_RATE = 0.01
+EntNET_LEARNING_RATE = 0.1
 EntNet_SAVE_EPOCH = 500
-EntNet_TEST_EPOCH = 100
+EntNet_TEST_EPOCH = 50
 EntNet_LOAD_NET = False
-
-# M_SLOTS = 20
 PAD_MAX_LENGTH = 10
 
 # Embedding

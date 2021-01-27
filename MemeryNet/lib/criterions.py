@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-class Loss_Calculator(nn.Module):
+class CosLoss(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -21,3 +21,18 @@ class Loss_Calculator(nn.Module):
         # magnitude loss
         # magnitude_loss = (predict_magnitude - ans_magnitude).abs()
         return  cos_loss
+
+class NLLLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.nllloss = nn.NLLLoss()
+
+    def forward(self, predict, ans):
+        """
+        :param predict: torch.tensor, shape=(1,m)
+        :param ans: torch.tensor, shape=(1), value is from 0 to m-1
+        :return: torch.tensor (scalar value)
+        """
+        loss = self.nllloss(predict, ans)
+        return loss
+

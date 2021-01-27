@@ -21,7 +21,7 @@ entNet = models.EntNet( W=SkipGram_Net.weights.t(),
                         X_size=(embed_size, embed_size),
                         Y_size=(embed_size, embed_size),
                         Z_size=(embed_size, embed_size),
-                        R_size=(embed_size, embed_size),
+                        R_size=(M_SLOTS, embed_size),
                         K_size=(embed_size, embed_size),
                         device=DEVICE)
 if EntNet_LOAD_NET:
@@ -36,7 +36,7 @@ else:
 
 # optimizer
 optimizer = optim.Adam(entNet.parameters(), lr=EntNET_LEARNING_RATE)
-criterion = criterions.Loss_Calculator()
+criterion = criterions.NLLLoss()
 
 writer = SummaryWriter(log_dir=EntNet_TENSORBOARD_SAVE_PATH, comment="EntNet")
 with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, episode=episode, write_episode=5) as tracker:
@@ -46,21 +46,21 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
         for T in data.generate(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
                                                                 fixed_length=PAD_MAX_LENGTH, device=DEVICE):
             entNet.forward(T.E_s, new_story=T.new_story)
-            predicted_vector = entNet.answer(T.Q)
-            loss = criterion(predicted_vector, T.ans_vector)
+            predict = entNet.answer(T.Q)
+            loss = criterion(predict, torch.tensor([T.ans], device=DEVICE))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             losses += loss.detach().cpu().item()
 
-            # checking the similarity
-            most_similarity_ans = funcs.get_most_similar_vectors_pos(SkipGram_Net.embedding_arr, predicted_vector.detach().cpu().numpy(), k=5)
-            if most_similarity_ans[0] == T.ans:
+            # checking correction
+            predict_ans = torch.argmax(predict.detach()).item()
+            if predict_ans == T.ans:
                 correct += 1
 
             # print the story for inspect
             if tracker.episode % EntNet_TEST_EPOCH == 0:
-                tracker.write(T.stories, T.q, most_similarity_ans[0], T.ans, T.new_story, T.end_story, "Train")
+                tracker.write(T.stories, T.q, predict_ans, T.ans, T.new_story, T.end_story, "Train")
 
             # save the embedding layer
             if tracker.episode % EntNet_SAVE_EPOCH == 0:
@@ -76,16 +76,16 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
             for t in data.generate(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
                                                                     fixed_length=PAD_MAX_LENGTH, device=DEVICE):
                 entNet.forward(t.E_s, new_story=t.new_story)
-                predicted_vector = entNet.answer(t.Q)
-                loss = criterion(predicted_vector, t.ans_vector)
+                predict = entNet.answer(t.Q)
+                loss = criterion(predict, torch.tensor([t.ans], device=DEVICE))
                 test_losses += loss.detach().cpu().item()
 
-                # checking the similarity
-                most_similarity_ans = funcs.get_most_similar_vectors_pos(SkipGram_Net.embedding_arr, predicted_vector.detach().cpu().numpy(), k=5)
-                if most_similarity_ans[0] == t.ans:
+                # checking correction
+                predict_ans = torch.argmax(predict.detach()).item()
+                if predict_ans == t.ans:
                     test_correct += 1
 
-                tracker.write(t.stories, t.q, most_similarity_ans[0], t.ans, t.new_story, t.end_story, "Test")
+                tracker.write(t.stories, t.q, predict_ans, t.ans, t.new_story, t.end_story, "Test")
 
                 test_q_count += 1
 
