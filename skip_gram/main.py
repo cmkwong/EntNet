@@ -76,7 +76,7 @@ while True:
     # save the embedding layer
     if epoch % SG_SAVE_EPOCH == 0 and epoch > 0:
         checkpoint = {"state_dict": model.state_dict()}
-        with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE_FORMAT.format(epoch, EMBED_SIZE)), "wb") as f:
+        with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE_SAVED.format(epoch)), "wb") as f:
             torch.save(checkpoint, f)
 
     if epoch % SG_WRITE_EPOCH == 0 and epoch > 0:

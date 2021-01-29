@@ -34,6 +34,17 @@ if EntNet_LOAD_NET:
 else:
     episode = 1
 
+if EntNet_LOAD_INIT:
+    print("Loading init net params...", end=' ')
+    with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE), "rb") as f:
+        checkpoint = torch.load(f)
+    entNet.load_state_dict(checkpoint['state_dict'])
+    print("Successful!")
+else:
+    checkpoint = {"state_dict": entNet.state_dict()}
+    with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE_SAVED), "wb") as f:
+        torch.save(checkpoint, f)
+
 # optimizer
 optimizer = optim.Adam(entNet.parameters(), lr=EntNET_LEARNING_RATE)
 criterion = criterions.NLLLoss()
@@ -65,7 +76,7 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
             # save the embedding layer
             if tracker.episode % EntNet_SAVE_EPOCH == 0:
                 checkpoint = {"state_dict": entNet.state_dict()}
-                with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE_FORMAT.format(TRAIN_DATA_INDEX, VERSION, tracker.episode)), "wb") as f:
+                with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE_SAVED.format(tracker.episode)), "wb") as f:
                     torch.save(checkpoint, f)
 
             q_count += 1

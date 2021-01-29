@@ -22,19 +22,22 @@ SG_BATCH_SIZE = 64
 SG_LOAD_NET = False
 
 # control for EntNet
-EntNET_LEARNING_RATE = 0.1
+EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 50
 EntNet_LOAD_NET = False
+EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 10
 
 # Embedding
-EMBED_FILE_FORMAT = "embedding-epoch-{}-E{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64)     # load weight file
+EMBED_FILE_FORMAT = "embedding-epoch-{}-Dim{}-T{}.data"   # Save Format
+EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64, "210129-001704")     # load weight file
 
 # EntNet
-EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch-{}.data"    # Save Format
-EntNET_FILE = EntNET_FILE_FORMAT.format(2, 2, 13400)                        # load weight file
+EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch-{}-T{}.data"    # Save Format
+EntNET_FILE = EntNET_FILE_FORMAT.format(2, 2, 13400, "210129-001704")           # load weight file
+EntNET_INIT_FILE_FORMAT = "init-entNet-VERSION{}-T{}.data"
+EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(VERSION, "210129-001704")
 
 
 # ------------------------------------------------------------------------------------------------------------- #
@@ -90,24 +93,31 @@ TEST_SET_NAME = {
 
 # for loading embedding params (Skip-gram / EntNet)
 SAVE_EMBED_PATH = MAIN_PATH + str(VERSION) + "/embedding/" + str(TRAIN_DATA_INDEX)
-TOKEN_COUNT = "token_count.txt"
-ORIGINAL_TOKEN_COUNT = "original_token_count.txt"
-INT2WORD = "int2word.txt"
-WORD2INT = "word2int.txt"
-SG_RESULTS = "results_epoch-{}.txt"
+TOKEN_COUNT = "token_count-T" + DT_STRING + ".txt"
+ORIGINAL_TOKEN_COUNT = "original_token_count-T" + DT_STRING + ".txt"
+INT2WORD = "int2word-T" + DT_STRING + ".txt"
+WORD2INT = "word2int-T" + DT_STRING + ".txt"
+SG_RESULTS = "results_epoch-{}-T" + DT_STRING + ".txt"
 
 # for Saving and Loading params (EntNet)
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
 
+# EntNET params file save name
+EntNET_INIT_FILE_SAVED = EntNET_INIT_FILE_FORMAT.format(VERSION, DT_STRING)
+EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(TRAIN_DATA_INDEX, VERSION, "{}", DT_STRING)
+
+# Skip-Gram params file save name
+EMBED_FILE_SAVED = EMBED_FILE_FORMAT.format("{}", EMBED_SIZE, DT_STRING)
+
 # output runs file for monitoring progress in tensorboard (Skip-Gram / EntNet)
-SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + str(TRAIN_DATA_INDEX) + '_es' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_v' + str(VERSION) + '_t' + DT_STRING
-EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_v' + str(VERSION) + '_t' + DT_STRING
+SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + str(TRAIN_DATA_INDEX) + '_es' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_v' + str(VERSION) + '_T' + DT_STRING
+EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_v' + str(VERSION) + '_T' + DT_STRING
 # tensorboard --logdir ~/projects/201119_EntNet/docs/3/runs --host localhost
 
 # output result.txt for inspection (EntNet)
 RESULT_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/results"
-INCORRECT_FILE_NAME = "S"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}.txt"
-CORRECT_FILE_NAME = "S"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}.txt"
+INCORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}-T" + DT_STRING + ".txt"
+CORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}-T" + DT_STRING + ".txt"
 
 # Special label
 QUESTION_MARK = ' <q> '
