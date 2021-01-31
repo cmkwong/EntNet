@@ -1,12 +1,12 @@
 from datetime import datetime
 now = datetime.now()
-DT_STRING = now.strftime("%y%m%d-%H%M%S")
+DT_STRING = now.strftime("%y%m%d%H%M%S")
 
 # ------------------------------------------------------------------------------------------------------------- #
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
 # ------------------------------------------------------------------------------------------------------------- #
 
-VERSION = 5
+VERSION = 6
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
@@ -28,16 +28,17 @@ EntNet_TEST_EPOCH = 50
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 10
+TIME = "210129001704"
 
 # Embedding
-EMBED_FILE_FORMAT = "embedding-epoch-{}-Dim{}-T{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64, "210129-001704")     # load weight file
+EMBED_FILE_FORMAT = "embedding-Epoch{}-Dim{}-T{}.data"   # Save Format
+EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64, TIME)     # load weight file
 
-# EntNet
-EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch-{}-T{}.data"    # Save Format
-EntNET_FILE = EntNET_FILE_FORMAT.format(2, 2, 13400, "210129-001704")           # load weight file
+# EntNet (Weight and init weight)
+EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch{}-T{}.data"    # Save Format
+EntNET_FILE = EntNET_FILE_FORMAT.format(2, 2, 13400, TIME)           # load weight file
 EntNET_INIT_FILE_FORMAT = "init-entNet-VERSION{}-T{}.data"
-EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(VERSION, "210129-001704")
+EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(5, TIME)
 
 
 # ------------------------------------------------------------------------------------------------------------- #
@@ -95,9 +96,9 @@ TEST_SET_NAME = {
 SAVE_EMBED_PATH = MAIN_PATH + str(VERSION) + "/embedding/" + str(TRAIN_DATA_INDEX)
 TOKEN_COUNT = "token_count-T" + DT_STRING + ".txt"
 ORIGINAL_TOKEN_COUNT = "original_token_count-T" + DT_STRING + ".txt"
-INT2WORD = "int2word-T" + DT_STRING + ".txt"
-WORD2INT = "word2int-T" + DT_STRING + ".txt"
-SG_RESULTS = "results_epoch-{}-T" + DT_STRING + ".txt"
+SAVED_INT2WORD, LOADED_INT2WORD = "int2word-T" + DT_STRING + ".txt", "int2word-T" + TIME + ".txt"
+SAVED_WORD2INT, LOADED_WORD2INT = "word2int-T" + DT_STRING + ".txt", "word2int-T" + TIME + ".txt"
+SG_RESULTS = "results_Epoch{}-T" + DT_STRING + ".txt"
 
 # for Saving and Loading params (EntNet)
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
@@ -110,8 +111,8 @@ EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(TRAIN_DATA_INDEX, VERSION, "{}", D
 EMBED_FILE_SAVED = EMBED_FILE_FORMAT.format("{}", EMBED_SIZE, DT_STRING)
 
 # output runs file for monitoring progress in tensorboard (Skip-Gram / EntNet)
-SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + str(TRAIN_DATA_INDEX) + '_es' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_v' + str(VERSION) + '_T' + DT_STRING
-EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_v' + str(VERSION) + '_T' + DT_STRING
+SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + str(TRAIN_DATA_INDEX) + '_Dim' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_V' + str(VERSION) + '_T' + DT_STRING
+EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_V' + str(VERSION) + '_T' + DT_STRING
 # tensorboard --logdir ~/projects/201119_EntNet/docs/3/runs --host localhost
 
 # output result.txt for inspection (EntNet)

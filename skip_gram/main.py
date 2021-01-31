@@ -12,8 +12,8 @@ token_stories, reasons, token_count, original_token_count, int2word, word2int, w
 # write the txt to store the word2int and int2word
 readFile.write_dict(original_token_count, SAVE_EMBED_PATH, file_name=ORIGINAL_TOKEN_COUNT)
 readFile.write_dict(token_count, SAVE_EMBED_PATH, file_name=TOKEN_COUNT)
-readFile.write_dict(int2word, SAVE_EMBED_PATH, file_name=INT2WORD)
-readFile.write_dict(word2int, SAVE_EMBED_PATH, file_name=WORD2INT)
+readFile.write_dict(int2word, SAVE_EMBED_PATH, file_name=SAVED_INT2WORD)
+readFile.write_dict(word2int, SAVE_EMBED_PATH, file_name=SAVED_WORD2INT)
 
 # merge into one list
 words = [word for story in token_stories for sentc in story for word in sentc]

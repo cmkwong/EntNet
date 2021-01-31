@@ -26,6 +26,9 @@ class EntNet(nn.Module):
             'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1))
         })
 
+        # dropout
+        self.dropout = nn.Dropout(p=0.3)
+
     def forward(self, E_s, new_story=True):
         """
         k = sentence length
@@ -38,7 +41,9 @@ class EntNet(nn.Module):
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
             s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
             G = nn.Softmax(dim=1)((torch.mm(s.t(), self.H) + torch.mm(s.t(), self.W)))  # (1*m)
-            new_H = nn.Sigmoid()(torch.mm(self.params['X'], self.H) + torch.mm(self.params['Y'], self.W) + torch.mm(self.params['Z'], s))  # (64*m)
+            new_H = nn.Sigmoid()(torch.mm(self.dropout(self.params['X']), self.H) +
+                                 torch.mm(self.dropout(self.params['Y']), self.W) +
+                                 torch.mm(self.dropout(self.params['Z']), s))  # (64*m)
             self.H = funcs.unitVector_2d(self.H + torch.mul(G, new_H), dim=0)  # (64*m)
 
     def answer(self, Q):

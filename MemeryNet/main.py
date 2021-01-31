@@ -3,12 +3,11 @@ from codes.common_cmk.config import *
 import torch
 import torch.optim as optim
 import os
-from codes.common_cmk import funcs
 import re
 from torch.utils.tensorboard import SummaryWriter
 
 # Read the token_count, int2word, word2int
-SkipGram_Net = data.load_file_from_SkipGram(SAVE_EMBED_PATH, EMBED_FILE, INT2WORD, WORD2INT)
+SkipGram_Net = data.load_file_from_SkipGram(SAVE_EMBED_PATH, EMBED_FILE, LOADED_INT2WORD, LOADED_WORD2INT)
 Train = data.translate_story_into_token(DATA_PATH, TRAIN_SET_NAME[TRAIN_DATA_INDEX], SkipGram_Net.word2int)
 Test = data.translate_story_into_token(DATA_PATH, TEST_SET_NAME[TRAIN_DATA_INDEX], SkipGram_Net.word2int)
 
