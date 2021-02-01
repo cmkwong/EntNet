@@ -27,7 +27,7 @@ EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 50
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
-PAD_MAX_LENGTH = 10
+PAD_MAX_LENGTH = 7
 TIME = "210129001704"
 
 # Embedding
@@ -38,7 +38,8 @@ EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64, TIME)     # load weight file
 EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch{}-T{}.data"    # Save Format
 EntNET_FILE = EntNET_FILE_FORMAT.format(2, 2, 13400, TIME)           # load weight file
 EntNET_INIT_FILE_FORMAT = "init-entNet-VERSION{}-T{}.data"
-EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(5, TIME)
+# EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(5, TIME) # 10 padding
+EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(6, "210131132549") # 7 padding
 
 
 # ------------------------------------------------------------------------------------------------------------- #
