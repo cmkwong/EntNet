@@ -1,4 +1,4 @@
-from lib import data, models, criterions
+from lib import data, models, criterions, graph
 from codes.common_cmk.config import *
 import torch
 import torch.optim as optim
@@ -55,11 +55,19 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
         q_count, correct, losses = 0, 0, 0
         for T in data.generate(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
                                                                 fixed_length=PAD_MAX_LENGTH, device=DEVICE):
+
+            # record the state before backpropagation
+            if tracker.episode % EntNet_PARAMS_EPOCH == 0:
+                entNet.record_allowed = True
+            else:
+                entNet.record_allowed = False
+
             entNet.forward(T.E_s, new_story=T.new_story)
             predict = entNet.answer(T.Q)
             loss = criterion(predict, torch.tensor([T.ans], device=DEVICE))
             optimizer.zero_grad()
             loss.backward()
+            if entNet.record_allowed: entNet.record_params()
             optimizer.step()
             losses += loss.detach().cpu().item()
 
@@ -104,4 +112,5 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
 
         tracker.print_episode_status(q_count, correct, losses, "Train")
         tracker.plot_episode_status(q_count, correct, losses, "Train")
+        if tracker.episode % EntNet_PARAMS_EPOCH == 0: entNet.snapshot(STATE_CHECKING_PATH, STATE_MATRICS, PARAMS_MATRICS, GRADIEND_MATRICS, tracker.episode)
         tracker.episode += 1

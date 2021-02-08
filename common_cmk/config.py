@@ -25,6 +25,7 @@ SG_LOAD_NET = False
 EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 50
+EntNet_PARAMS_EPOCH = 1
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 7
@@ -104,7 +105,7 @@ SG_RESULTS = "results_Epoch{}-T" + DT_STRING + ".txt"
 # for Saving and Loading params (EntNet)
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
 
-# EntNET params file save name
+# EntNET params checkpoint file save name
 EntNET_INIT_FILE_SAVED = EntNET_INIT_FILE_FORMAT.format(VERSION, DT_STRING)
 EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(TRAIN_DATA_INDEX, VERSION, "{}", DT_STRING)
 
@@ -120,6 +121,12 @@ EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + st
 RESULT_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/results"
 INCORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}-T" + DT_STRING + ".txt"
 CORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}-T" + DT_STRING + ".txt"
+
+# output state, params and gradient for inspection (EntNet)
+STATE_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/state"
+STATE_MATRICS = "state_e{}_" + DT_STRING + ".npz"
+PARAMS_MATRICS = "params_e{}_" + DT_STRING + ".npz"
+GRADIEND_MATRICS =  "gradient_e{}_" + DT_STRING + ".npz"
 
 # Special label
 QUESTION_MARK = ' <q> '
