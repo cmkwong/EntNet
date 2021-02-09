@@ -6,7 +6,7 @@ DT_STRING = now.strftime("%y%m%d%H%M%S")
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
 # ------------------------------------------------------------------------------------------------------------- #
 
-VERSION = 6
+VERSION = 7
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
@@ -124,9 +124,9 @@ CORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}-T" + DT_STRING
 
 # output state, params and gradient for inspection (EntNet)
 STATE_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/state"
-STATE_MATRICS = "state_e{}_" + DT_STRING + ".npz"
-PARAMS_MATRICS = "params_e{}_" + DT_STRING + ".npz"
-GRADIEND_MATRICS =  "gradient_e{}_" + DT_STRING + ".npz"
+STATE_MATRICS = DT_STRING + "_state_e{}.pkl"
+PARAMS_MATRICS = DT_STRING + "_params_e{}.pkl"
+GRADIEND_MATRICS =  DT_STRING + "_gradient_e{}.pkl"
 
 # Special label
 QUESTION_MARK = ' <q> '

@@ -3,6 +3,7 @@ import numpy as np
 from torch import nn
 from codes.common_cmk import funcs
 from codes.MemeryNet.lib import descriptor
+import pickle
 
 class EntNet(nn.Module):
 
@@ -92,10 +93,12 @@ class EntNet(nn.Module):
         params_full_path = path + '/' + params_name.format(episode)
         grad_full_path = path + '/' + grad_name.format(episode)
         # save matrics
-        np.savez_compressed(matrix_full_path, self.matrics)
-        np.savez_compressed(params_full_path, self.params_matrics)
-        np.savez_compressed(grad_full_path, self.grads_matrics)
-
+        with open(matrix_full_path, 'wb') as f:
+            pickle.dump(self.matrics, f, pickle.HIGHEST_PROTOCOL)
+        with open(params_full_path, 'wb') as f:
+            pickle.dump(self.params_matrics, f, pickle.HIGHEST_PROTOCOL)
+        with open(grad_full_path, 'wb') as f:
+            pickle.dump(self.grads_matrics, f, pickle.HIGHEST_PROTOCOL)
         # init records setting
         self.init_record_status()
 
