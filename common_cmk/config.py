@@ -25,7 +25,7 @@ SG_LOAD_NET = False
 EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 50
-EntNet_PARAMS_EPOCH = 1
+EntNet_PARAMS_EPOCH = 1000
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 7
@@ -36,11 +36,11 @@ EMBED_FILE_FORMAT = "embedding-Epoch{}-Dim{}-T{}.data"   # Save Format
 EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64, TIME)     # load weight file
 
 # EntNet (Weight and init weight)
-EntNET_FILE_FORMAT = "checkpoint-entNet-STORY{}-VERSION{}-Epoch{}-T{}.data"    # Save Format
-EntNET_FILE = EntNET_FILE_FORMAT.format(2, 2, 13400, TIME)           # load weight file
-EntNET_INIT_FILE_FORMAT = "init-entNet-VERSION{}-T{}.data"
+EntNET_FILE_FORMAT = "T{}_checkpoint-entNet-STORY{}-VERSION{}-Epoch{}.data"    # Save Format
+EntNET_FILE = EntNET_FILE_FORMAT.format(TIME, 2, 2, 13400)           # load weight file
+EntNET_INIT_FILE_FORMAT = "T{}_init-entNet-VERSION{}.data"
 # EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(5, TIME) # 10 padding
-EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(6, "210131132549") # 7 padding
+EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210131132549", 6) # 7 padding
 
 
 # ------------------------------------------------------------------------------------------------------------- #
@@ -106,27 +106,28 @@ SG_RESULTS = "results_Epoch{}-T" + DT_STRING + ".txt"
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
 
 # EntNET params checkpoint file save name
-EntNET_INIT_FILE_SAVED = EntNET_INIT_FILE_FORMAT.format(VERSION, DT_STRING)
-EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(TRAIN_DATA_INDEX, VERSION, "{}", DT_STRING)
+EntNET_INIT_FILE_SAVED = EntNET_INIT_FILE_FORMAT.format(DT_STRING, VERSION)
+EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(DT_STRING, TRAIN_DATA_INDEX, VERSION, "{}")
 
 # Skip-Gram params file save name
 EMBED_FILE_SAVED = EMBED_FILE_FORMAT.format("{}", EMBED_SIZE, DT_STRING)
 
 # output runs file for monitoring progress in tensorboard (Skip-Gram / EntNet)
-SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + str(TRAIN_DATA_INDEX) + '_Dim' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_V' + str(VERSION) + '_T' + DT_STRING
-EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_V' + str(VERSION) + '_T' + DT_STRING
+SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + '_T' + DT_STRING + str(TRAIN_DATA_INDEX) + '_Dim' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_V' + str(VERSION)
+EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + '_T' + DT_STRING + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_V' + str(VERSION)
 # tensorboard --logdir ~/projects/201119_EntNet/docs/3/runs --host localhost
 
 # output result.txt for inspection (EntNet)
 RESULT_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/results"
-INCORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}-T" + DT_STRING + ".txt"
-CORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}-T" + DT_STRING + ".txt"
+INCORRECT_FILE_NAME = "T" + DT_STRING + "_QA"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}.txt"
+CORRECT_FILE_NAME = "T" + DT_STRING + "_QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}.txt"
 
 # output state, params and gradient for inspection (EntNet)
 STATE_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/state"
 STATE_MATRICS = DT_STRING + "_state_e{}.pkl"
 PARAMS_MATRICS = DT_STRING + "_params_e{}.pkl"
 GRADIEND_MATRICS =  DT_STRING + "_gradient_e{}.pkl"
+STATE_PATH = DT_STRING + "_state-path_e{}.pkl"
 
 # Special label
 QUESTION_MARK = ' <q> '

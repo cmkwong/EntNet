@@ -46,14 +46,20 @@ class EntNet(nn.Module):
         self.dropout = nn.Dropout(p=0.3)
 
         # init records setting
-        self.init_record_status()
+        self.reset_record_status()
 
-    def init_record_status(self):
+    def reset_record_status(self):
         self.story_index = 0
+        self.state_path = {}
         self.matrics = {}
         self.params_matrics = {}
         self.grads_matrics = {}
         self.record_allowed = False  # allow the descriptor record each of state from model
+
+    def init_record_status_for_each_story(self):
+        if self.record_allowed:
+            self.matrics[self.story_index] = {}
+            self.state_path[self.story_index] = []
 
     def record_params(self):
 
@@ -88,10 +94,11 @@ class EntNet(nn.Module):
     #     for grad_input in grad_inputs:
     #         self.params_grads[self.story_index] = grad_input.detach().cpu().numpy()
 
-    def snapshot(self, path, matrix_name, params_name, grad_name, episode):
+    def snapshot(self, path, matrix_name, params_name, grad_name, state_path_name, episode):
         matrix_full_path = path + '/' + matrix_name.format(episode)
         params_full_path = path + '/' + params_name.format(episode)
         grad_full_path = path + '/' + grad_name.format(episode)
+        matrics_path_full_path = path + '/' + state_path_name.format(episode)
         # save matrics
         with open(matrix_full_path, 'wb') as f:
             pickle.dump(self.matrics, f, pickle.HIGHEST_PROTOCOL)
@@ -99,8 +106,10 @@ class EntNet(nn.Module):
             pickle.dump(self.params_matrics, f, pickle.HIGHEST_PROTOCOL)
         with open(grad_full_path, 'wb') as f:
             pickle.dump(self.grads_matrics, f, pickle.HIGHEST_PROTOCOL)
+        with open(matrics_path_full_path, 'wb') as f:
+            pickle.dump(self.state_path, f, pickle.HIGHEST_PROTOCOL)
         # init records setting
-        self.init_record_status()
+        self.reset_record_status()
 
     def forward(self, E_s, new_story=True):
         """
@@ -109,7 +118,6 @@ class EntNet(nn.Module):
         :param E_s: [ torch.tensor = facts in word embeddings ]
         :return: ans_vector (n,1)
         """
-
         self.prepare_memory(new_story)
         for E in E_s:
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
@@ -136,11 +144,14 @@ class EntNet(nn.Module):
         return self.ans
 
     def prepare_memory(self, new_story):
+
         if new_story:
             self.story_index += 1
-            if self.record_allowed: self.matrics[self.story_index] = {}
+            self.init_record_status_for_each_story()
+            if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
             self.H = nn.init.normal_(self.H).detach()
         else:
+            if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
             self.H = self.H.detach()
 
     def unit_params(self, name, dim):

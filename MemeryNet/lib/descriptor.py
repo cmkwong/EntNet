@@ -19,6 +19,7 @@ class s_AttriAccess:
                 obj.matrics[obj.story_index]['s'] = np.concatenate((obj.matrics[obj.story_index]['s'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['s'] = vector
+            obj.state_path[obj.story_index].append('s')
 
 class G_AttriAccess:
 
@@ -39,6 +40,7 @@ class G_AttriAccess:
                 obj.matrics[obj.story_index]['G'] = np.concatenate((obj.matrics[obj.story_index]['G'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['G'] = vector
+            obj.state_path[obj.story_index].append('G')
 
 class H_AttriAccess:
 
@@ -59,6 +61,7 @@ class H_AttriAccess:
                 obj.matrics[obj.story_index]['H'] = np.concatenate((obj.matrics[obj.story_index]['H'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['H'] = vector
+            obj.state_path[obj.story_index].append('H')
 
 class new_H_AttriAccess:
 
@@ -79,6 +82,7 @@ class new_H_AttriAccess:
                 obj.matrics[obj.story_index]['new_H'] = np.concatenate((obj.matrics[obj.story_index]['new_H'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['new_H'] = vector
+            obj.state_path[obj.story_index].append('new_H')
 
 class q_AttriAccess:
 
@@ -99,6 +103,7 @@ class q_AttriAccess:
                 obj.matrics[obj.story_index]['q'] = np.concatenate((obj.matrics[obj.story_index]['q'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['q'] = vector
+            obj.state_path[obj.story_index].append('q')
 
 class p_AttriAccess:
 
@@ -119,6 +124,7 @@ class p_AttriAccess:
                 obj.matrics[obj.story_index]['p'] = np.concatenate((obj.matrics[obj.story_index]['p'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['p'] = vector
+            obj.state_path[obj.story_index].append('p')
 
 class u_AttriAccess:
 
@@ -139,6 +145,7 @@ class u_AttriAccess:
                 obj.matrics[obj.story_index]['u'] = np.concatenate((obj.matrics[obj.story_index]['u'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['u'] = vector
+            obj.state_path[obj.story_index].append('u')
 
 class ans_vector_AttriAccess:
 
@@ -159,6 +166,7 @@ class ans_vector_AttriAccess:
                 obj.matrics[obj.story_index]['ans_vector'] = np.concatenate((obj.matrics[obj.story_index]['ans_vector'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['ans_vector'] = vector
+            obj.state_path[obj.story_index].append('ans_vector')
 
 class ans_AttriAccess:
 
@@ -179,3 +187,5 @@ class ans_AttriAccess:
                 obj.matrics[obj.story_index]['ans'] = np.concatenate((obj.matrics[obj.story_index]['ans'], vector), axis=0)
             else:
                 obj.matrics[obj.story_index]['ans'] = vector
+            obj.state_path[obj.story_index].append('ans')
+            obj.state_path[obj.story_index].append('grad')

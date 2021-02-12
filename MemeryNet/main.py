@@ -112,5 +112,5 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
 
         tracker.print_episode_status(q_count, correct, losses, "Train")
         tracker.plot_episode_status(q_count, correct, losses, "Train")
-        if tracker.episode % EntNet_PARAMS_EPOCH == 0: entNet.snapshot(STATE_CHECKING_PATH, STATE_MATRICS, PARAMS_MATRICS, GRADIEND_MATRICS, tracker.episode)
+        if tracker.episode % EntNet_PARAMS_EPOCH == 0: entNet.snapshot(STATE_CHECKING_PATH, STATE_MATRICS, PARAMS_MATRICS, GRADIEND_MATRICS, STATE_PATH, tracker.episode)
         tracker.episode += 1
