@@ -56,8 +56,9 @@ class EntNet(nn.Module):
         self.grads_matrics = {}
         self.record_allowed = False  # allow the descriptor record each of state from model
 
-    def init_record_status_for_each_story(self):
+    def init_record_status_for_new_story(self):
         if self.record_allowed:
+            self.story_index += 1
             self.matrics[self.story_index] = {}
             self.state_path[self.story_index] = []
 
@@ -111,6 +112,31 @@ class EntNet(nn.Module):
         # init records setting
         self.reset_record_status()
 
+    def run_model(self, dataset, criterion, optimizer, device, mode="train"):
+        """
+        :param dataset: collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
+        :param criterion: criterion
+        :param optimizer: optimizer
+        :param mode: string: train/test
+        :return: detached_loss, predict_ans
+        """
+        if mode == "Train":
+            self.train()
+        elif mode == "Test":
+            self.eval()
+        self.forward(dataset.E_s, new_story=dataset.new_story)
+        predict = self.answer(dataset.Q)
+        loss = criterion(predict, torch.tensor([dataset.ans], device=device))
+        if mode == "Train":
+            optimizer.zero_grad()
+            loss.backward()
+            if self.record_allowed: self.record_params()
+            optimizer.step()
+        # detach the loss and predicted vector
+        detached_loss = loss.detach().cpu().item()
+        predict_ans = torch.argmax(predict.detach().cpu()).item() # get the ans value in integer
+        return detached_loss, predict_ans
+
     def forward(self, E_s, new_story=True):
         """
         k = sentence length
@@ -144,10 +170,8 @@ class EntNet(nn.Module):
         return self.ans
 
     def prepare_memory(self, new_story):
-
         if new_story:
-            self.story_index += 1
-            self.init_record_status_for_each_story()
+            self.init_record_status_for_new_story()
             if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
             self.H = nn.init.normal_(self.H).detach()
         else:

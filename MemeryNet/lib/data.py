@@ -110,7 +110,7 @@ def generate_data(embedding, token_stories, token_answers, word2int, fixed_lengt
     :param token_answers: [ [12,34], ... ]
     :param word2int: dict
     :param fixed_length: int
-    :return: {story_i: [{
+    :return: {story_i: [ nametuple:
                             "E_s": [embedding, ...],
                             'Q': embedding,
                             "ans_vector": embedding,
@@ -119,86 +119,48 @@ def generate_data(embedding, token_stories, token_answers, word2int, fixed_lengt
                             "end_story": Boolean,
                             'stories': [int],
                             'q': [int]
-                        }]
+                        ], ...
                 }
     data: {"E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'}
     """
 
     def init_data():
-        data = {}
-        data["E_s"], data["stories"] = [], []
-        data['Q'], data['q'], data["ans_vector"], data["ans"] = None,None,None,None
-        data["new_story"], data["end_story"] = None,None
-        return data
+        DataSet = collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
+        DataSet.E_s, DataSet.stories = [], []
+        DataSet.Q, DataSet.q, DataSet.ans_vector, DataSet.ans = None,None,None,None
+        DataSet.new_story, DataSet.end_story = None, None
+        return DataSet
 
-    datas = {}
+    DataSets = {}
     for story_i, story in enumerate(token_stories):
-        datas[story_i] = []
-        data = init_data()
-        data["new_story"] = True
+        DataSets[story_i] = []
+        DataSet = init_data()
+        DataSet.new_story = True
         Q_count = 0
         story_len = len(story)
         for sentc_i, sentence in enumerate(story):
             # check if this sentence is the last one, if so, set the end_story = True
             if sentc_i == story_len - 1:
-                data["end_story"] = True
+                DataSet.end_story = True
             else:
-                data["end_story"] = False
+                DataSet.end_story = False
             E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            # check if the sentence is the question
             if word2int['<q>'] in sentence:
-                data['Q'] = E
-                data['q'] = sentence
+                DataSet.Q = E
+                DataSet.q = sentence
                 # acquire the ans
-                data["ans"] = token_answers[story_i][Q_count]
-                data["ans_vector"] = sentc2e(embedding, data["ans"], fixed_length=1, device=device)
-                datas[story_i].append(data)
+                DataSet.ans = token_answers[story_i][Q_count]
+                DataSet.ans_vector = sentc2e(embedding, DataSet.ans, fixed_length=1, device=device)
+                DataSets[story_i].append(DataSet)
                 # reset after yield
-                data["new_story"] = False
-                data = init_data()
+                DataSet = init_data()
+                DataSet.new_story = False
                 Q_count += 1
             else:
-                data["E_s"].append(E)
-                data["stories"].append(E)
-    return datas
-
-def generate_data2(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
-    """
-    :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
-    :param token_answers: [ [12,34], ... ]
-    :param word2int: dict
-    :param fixed_length: int
-    :return: DataSet
-    """
-    datas = {}
-    # DataSet = collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
-    for story_i, story in enumerate(token_stories):
-        datas[story_i] = {}
-        datas[story_i]["new_story"] = True
-        Q_count = 0
-        datas[story_i]["E_s"], datas[story_i]["stories"] = [], []
-        story_len = len(story)
-        for sentc_i, sentence in enumerate(story):
-            # check if this sentence is the last one, if so, set the end_story = True
-            if sentc_i == story_len - 1:
-                datas[story_i]["end_story"] = True
-            else:
-                datas[story_i]["end_story"] = False
-            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
-            if word2int['<q>'] in sentence:
-                datas[story_i]['Q'] = E
-                datas[story_i]['q'] = sentence
-                # acquire the ans
-                datas[story_i]['ans'] = token_answers[story_i][Q_count]
-                datas[story_i]['ans_vector'] = sentc2e(embedding, datas[story_i]['ans'], fixed_length=1, device=device)
-
-                # reset
-                datas[story_i]["new_story"] = False
-                # DataSet.E_s.clear()
-                Q_count += 1
-            else:
-                datas[story_i]["E_s"].append(E)
-                datas[story_i]["stories"].append(sentence)
-    return datas
+                DataSet.E_s.append(E)
+                DataSet.stories.append(sentence)
+    return DataSets
 
 class Episode_Tracker:
     def __init__(self, int2word, path, writer, episode, write_episode):

@@ -25,15 +25,17 @@ SG_LOAD_NET = False
 EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 50
-EntNet_PARAMS_EPOCH = 1000
+EntNet_STATE_EPOCH = 1000
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 7
 TIME = "210129001704"
 
 # Embedding
-EMBED_FILE_FORMAT = "embedding-Epoch{}-Dim{}-T{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(6000, 64, TIME)     # load weight file
+EMBED_FILE_FORMAT = "T{}-embedding-Epoch{}-Dim{}.data"   # Save Format
+EMBED_FILE = EMBED_FILE_FORMAT.format(TIME, 6000, 64)     # load weight file
+LOADED_INT2WORD = "T" + TIME + "-int2word.txt"  # loaded for entNet
+LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 
 # EntNet (Weight and init weight)
 EntNET_FILE_FORMAT = "T{}_checkpoint-entNet-STORY{}-VERSION{}-Epoch{}.data"    # Save Format
@@ -96,11 +98,11 @@ TEST_SET_NAME = {
 
 # for loading embedding params (Skip-gram / EntNet)
 SAVE_EMBED_PATH = MAIN_PATH + str(VERSION) + "/embedding/" + str(TRAIN_DATA_INDEX)
-TOKEN_COUNT = "token_count-T" + DT_STRING + ".txt"
-ORIGINAL_TOKEN_COUNT = "original_token_count-T" + DT_STRING + ".txt"
-SAVED_INT2WORD, LOADED_INT2WORD = "int2word-T" + DT_STRING + ".txt", "int2word-T" + TIME + ".txt"
-SAVED_WORD2INT, LOADED_WORD2INT = "word2int-T" + DT_STRING + ".txt", "word2int-T" + TIME + ".txt"
-SG_RESULTS = "results_Epoch{}-T" + DT_STRING + ".txt"
+TOKEN_COUNT = "T" + DT_STRING + "-token_count.txt"
+ORIGINAL_TOKEN_COUNT = "T" + DT_STRING + "-original_token_count.txt"
+SAVED_INT2WORD = "T" + DT_STRING + "-int2word.txt"
+SAVED_WORD2INT = "T" + DT_STRING + "-word2int.txt"
+SG_RESULTS = "T" + DT_STRING + "-results_Epoch{}.txt"
 
 # for Saving and Loading params (EntNet)
 SAVE_EntNET_PATH = MAIN_PATH + str(VERSION) + "/entNet_weights"
@@ -110,7 +112,7 @@ EntNET_INIT_FILE_SAVED = EntNET_INIT_FILE_FORMAT.format(DT_STRING, VERSION)
 EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(DT_STRING, TRAIN_DATA_INDEX, VERSION, "{}")
 
 # Skip-Gram params file save name
-EMBED_FILE_SAVED = EMBED_FILE_FORMAT.format("{}", EMBED_SIZE, DT_STRING)
+EMBED_FILE_SAVED = EMBED_FILE_FORMAT.format(DT_STRING, "{}", EMBED_SIZE)
 
 # output runs file for monitoring progress in tensorboard (Skip-Gram / EntNet)
 SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + '_T' + DT_STRING + str(TRAIN_DATA_INDEX) + '_Dim' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_V' + str(VERSION)

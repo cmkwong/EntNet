@@ -57,66 +57,62 @@ criterion = criterions.NLLLoss()
 writer = SummaryWriter(log_dir=EntNet_TENSORBOARD_SAVE_PATH, comment="EntNet")
 with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, episode=episode, write_episode=5) as tracker:
     while True:
-        entNet.train()
+
         q_count, correct, losses = 0, 0, 0
-        for T in data.generate(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
-                                                                fixed_length=PAD_MAX_LENGTH, device=DEVICE):
+        # record the state before backpropagation
+        if tracker.episode % EntNet_STATE_EPOCH == 0:
+            entNet.record_allowed = True
+        else:
+            entNet.record_allowed = False
 
-            # record the state before backpropagation
-            if tracker.episode % EntNet_PARAMS_EPOCH == 0:
-                entNet.record_allowed = True
-            else:
-                entNet.record_allowed = False
+        # training
+        for story_i, story in train_set.items():
+            for T in story:
 
-            entNet.forward(T.E_s, new_story=T.new_story)
-            predict = entNet.answer(T.Q)
-            loss = criterion(predict, torch.tensor([T.ans], device=DEVICE))
-            optimizer.zero_grad()
-            loss.backward()
-            if entNet.record_allowed: entNet.record_params()
-            optimizer.step()
-            losses += loss.detach().cpu().item()
-
-            # checking correction
-            predict_ans = torch.argmax(predict.detach()).item()
-            if predict_ans == T.ans:
-                correct += 1
-
-            # print the story for inspect
-            if tracker.episode % EntNet_TEST_EPOCH == 0:
-                tracker.write(T.stories, T.q, predict_ans, T.ans, T.new_story, T.end_story, "Train")
-
-            # save the embedding layer
-            if tracker.episode % EntNet_SAVE_EPOCH == 0:
-                checkpoint = {"state_dict": entNet.state_dict()}
-                with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE_SAVED.format(tracker.episode)), "wb") as f:
-                    torch.save(checkpoint, f)
-
-            q_count += 1
-
-        if tracker.episode % EntNet_TEST_EPOCH == 0:
-            test_q_count, test_correct, test_losses = 0,0,0
-            entNet.eval()
-            for t in data.generate(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
-                                                                    fixed_length=PAD_MAX_LENGTH, device=DEVICE):
-                entNet.forward(t.E_s, new_story=t.new_story)
-                predict = entNet.answer(t.Q)
-                loss = criterion(predict, torch.tensor([t.ans], device=DEVICE))
-                test_losses += loss.detach().cpu().item()
+                # run the model
+                loss, predict_ans = entNet.run_model(T, criterion, optimizer, DEVICE, mode="Train")
+                losses += loss
 
                 # checking correction
-                predict_ans = torch.argmax(predict.detach()).item()
-                if predict_ans == t.ans:
-                    test_correct += 1
+                if predict_ans == T.ans:
+                    correct += 1
 
-                tracker.write(t.stories, t.q, predict_ans, t.ans, t.new_story, t.end_story, "Test")
+                # print the story for inspect
+                if tracker.episode % EntNet_TEST_EPOCH == 0:
+                    tracker.write(T.stories, T.q, predict_ans, T.ans, T.new_story, T.end_story, "Train")
 
-                test_q_count += 1
+                q_count += 1
+
+        # testing
+        if tracker.episode % EntNet_TEST_EPOCH == 0:
+            test_q_count, test_correct, test_losses = 0,0,0
+            entNet.record_allowed = False
+            for story_i, story in test_set.items():
+                for t in story:
+
+                    loss, predict_ans = entNet.run_model(t, criterion, None, DEVICE, mode="Test")
+                    test_losses += loss
+
+                    # checking correction
+                    if predict_ans == t.ans:
+                        test_correct += 1
+
+                    tracker.write(t.stories, t.q, predict_ans, t.ans, t.new_story, t.end_story, "Test")
+
+                    test_q_count += 1
 
             tracker.print_episode_status(test_q_count, test_correct, test_losses, "Test")
             tracker.plot_episode_status(test_q_count, test_correct, test_losses, "Test")
 
+        # save the entNet layer
+        if tracker.episode % EntNet_SAVE_EPOCH == 0:
+            checkpoint = {"state_dict": entNet.state_dict()}
+            with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE_SAVED.format(tracker.episode)), "wb") as f:
+                torch.save(checkpoint, f)
+
         tracker.print_episode_status(q_count, correct, losses, "Train")
         tracker.plot_episode_status(q_count, correct, losses, "Train")
-        if tracker.episode % EntNet_PARAMS_EPOCH == 0: entNet.snapshot(STATE_CHECKING_PATH, STATE_MATRICS, PARAMS_MATRICS, GRADIEND_MATRICS, STATE_PATH, tracker.episode)
+        if tracker.episode % EntNet_STATE_EPOCH == 0: entNet.snapshot(STATE_CHECKING_PATH, STATE_MATRICS, PARAMS_MATRICS, GRADIEND_MATRICS,
+                                                                       STATE_PATH, tracker.episode)
+
         tracker.episode += 1
