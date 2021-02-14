@@ -23,44 +23,6 @@ def sentc2e(embedding, sentc_ints, fixed_length=6, device="cuda"):
         else:
             embed_vectors = torch.cat((embed_vectors, embedding(sentc_int).unsqueeze(0).t()), dim=1)
     return embed_vectors
-# embedding = torch.nn.Embedding(21, 64)
-# sentc_ints = [20,4,1,2]
-# e = sentc2e(embedding, sentc_ints, 10)
-
-# def preprocess_story_Discard(path, file_name):
-#
-#     Data = collections.namedtuple("Data", ["token_stories", "token_answers", "reasons", "int2word", "word2int"])
-#
-#     # read file
-#     raw_stories, answers, reasons = readFile.read_as_story(path, file_name)
-#
-#     # label special charactor
-#     stories = []
-#     for story in raw_stories:
-#         stories.append([readFile.label_special_token(sentc) for sentc in story])
-#
-#     # tokenize into word from the sentence
-#     word_stories = [readFile.tokenize_sentences(story) for story in stories]
-#
-#     token_count = Counter()
-#     for word_story in word_stories:
-#         tc = readFile.get_token_count_from_sentences(word_story)
-#         token_count = token_count + tc
-#
-#     # create word2int and int2word
-#     Data.int2word, Data.word2int = readFile.create_lookup_table(token_count, reverse=True)
-#
-#     # label the word as int
-#     Data.token_stories = [readFile.label_word_as_int_token(word_story, Data.word2int) for word_story in word_stories]
-#     Data.token_answers = readFile.label_word_as_int_token(answers, Data.word2int)
-#
-#     # separate the facts and questions
-#     # token_facts, token_questions = [], []
-#     # for token_story in token_stories:
-#     #     token_fact, token_question = readFile.target_detach(token_story, target_label=word2int['<q>'])
-#     #     token_facts.append(token_fact)
-#     #     token_questions.append(token_question)
-#     return Data
 
 def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
 
@@ -105,35 +67,12 @@ def translate_story_into_token(path, file_name, word2int):
 
     return Data
 
-# def generate(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
-#     """
-#     :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
-#     :param token_answers: [ [12,34], ... ]
-#     :return: [ torch.tensor(size=(n,fixed_length)), ... ], torch.tensor(size=(n,fixed_length)), torch_tensor(size=(n,1)), Boolean
-#     """
-#     for story_i, story in enumerate(token_stories):
-#         new_story = True
-#         Q_count = 0
-#         E_s = []
-#         for sentence in story:
-#             E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
-#             if word2int['<q>'] in sentence:
-#                 Q = E
-#                 # acquire the ans
-#                 ans = token_answers[story_i][Q_count]
-#                 ans_vector = sentc2e(embedding, ans, fixed_length=1, device=device)
-#                 yield E_s, Q, ans_vector, ans, new_story
-#                 # reset after yield
-#                 new_story = False
-#                 E_s.clear()
-#                 Q_count += 1
-#             else:
-#                 E_s.append(E)
-
 def generate(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
     """
     :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
     :param token_answers: [ [12,34], ... ]
+    :param word2int: dict
+    :param fixed_length: int
     :return: GenSet
     """
     GenSet = collections.namedtuple('GenSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
@@ -164,6 +103,102 @@ def generate(embedding, token_stories, token_answers, word2int, fixed_length=10,
             else:
                 GenSet.E_s.append(E)
                 GenSet.stories.append(sentence)
+
+def generate_data(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
+    """
+    :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
+    :param token_answers: [ [12,34], ... ]
+    :param word2int: dict
+    :param fixed_length: int
+    :return: {story_i: [{
+                            "E_s": [embedding, ...],
+                            'Q': embedding,
+                            "ans_vector": embedding,
+                            "ans": int,
+                            "new_story": Boolean,
+                            "end_story": Boolean,
+                            'stories': [int],
+                            'q': [int]
+                        }]
+                }
+    data: {"E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'}
+    """
+
+    def init_data():
+        data = {}
+        data["E_s"], data["stories"] = [], []
+        data['Q'], data['q'], data["ans_vector"], data["ans"] = None,None,None,None
+        data["new_story"], data["end_story"] = None,None
+        return data
+
+    datas = {}
+    for story_i, story in enumerate(token_stories):
+        datas[story_i] = []
+        data = init_data()
+        data["new_story"] = True
+        Q_count = 0
+        story_len = len(story)
+        for sentc_i, sentence in enumerate(story):
+            # check if this sentence is the last one, if so, set the end_story = True
+            if sentc_i == story_len - 1:
+                data["end_story"] = True
+            else:
+                data["end_story"] = False
+            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            if word2int['<q>'] in sentence:
+                data['Q'] = E
+                data['q'] = sentence
+                # acquire the ans
+                data["ans"] = token_answers[story_i][Q_count]
+                data["ans_vector"] = sentc2e(embedding, data["ans"], fixed_length=1, device=device)
+                datas[story_i].append(data)
+                # reset after yield
+                data["new_story"] = False
+                data = init_data()
+                Q_count += 1
+            else:
+                data["E_s"].append(E)
+                data["stories"].append(E)
+    return datas
+
+def generate_data2(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
+    """
+    :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
+    :param token_answers: [ [12,34], ... ]
+    :param word2int: dict
+    :param fixed_length: int
+    :return: DataSet
+    """
+    datas = {}
+    # DataSet = collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
+    for story_i, story in enumerate(token_stories):
+        datas[story_i] = {}
+        datas[story_i]["new_story"] = True
+        Q_count = 0
+        datas[story_i]["E_s"], datas[story_i]["stories"] = [], []
+        story_len = len(story)
+        for sentc_i, sentence in enumerate(story):
+            # check if this sentence is the last one, if so, set the end_story = True
+            if sentc_i == story_len - 1:
+                datas[story_i]["end_story"] = True
+            else:
+                datas[story_i]["end_story"] = False
+            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            if word2int['<q>'] in sentence:
+                datas[story_i]['Q'] = E
+                datas[story_i]['q'] = sentence
+                # acquire the ans
+                datas[story_i]['ans'] = token_answers[story_i][Q_count]
+                datas[story_i]['ans_vector'] = sentc2e(embedding, datas[story_i]['ans'], fixed_length=1, device=device)
+
+                # reset
+                datas[story_i]["new_story"] = False
+                # DataSet.E_s.clear()
+                Q_count += 1
+            else:
+                datas[story_i]["E_s"].append(E)
+                datas[story_i]["stories"].append(sentence)
+    return datas
 
 class Episode_Tracker:
     def __init__(self, int2word, path, writer, episode, write_episode):

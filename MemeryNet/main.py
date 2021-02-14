@@ -23,6 +23,12 @@ entNet = models.EntNet( W=SkipGram_Net.weights.t(),
                         R_size=(M_SLOTS, embed_size),
                         K_size=(embed_size, embed_size),
                         device=DEVICE)
+# generate training and test set
+train_set = data.generate_data(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
+                               fixed_length=PAD_MAX_LENGTH, device=DEVICE)
+test_set = data.generate_data(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
+                               fixed_length=PAD_MAX_LENGTH, device=DEVICE)
+
 if EntNet_LOAD_NET:
     print("Loading net params...", end=' ')
     with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE), "rb") as f:
