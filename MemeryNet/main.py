@@ -55,7 +55,7 @@ optimizer = optim.Adam(entNet.parameters(), lr=EntNET_LEARNING_RATE)
 criterion = criterions.NLLLoss()
 
 writer = SummaryWriter(log_dir=EntNet_TENSORBOARD_SAVE_PATH, comment="EntNet")
-with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, episode=episode, write_episode=5) as tracker:
+with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, episode=episode, write_episode=5) as tracker:
     while True:
 
         q_count, correct, losses = 0, 0, 0
@@ -109,6 +109,9 @@ with data.Episode_Tracker(SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, e
             checkpoint = {"state_dict": entNet.state_dict()}
             with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE_SAVED.format(tracker.episode)), "wb") as f:
                 torch.save(checkpoint, f)
+
+        if tracker.episode % WEIGHT_VISUALIZE_EPOCH == 0:
+            tracker.weight_visualize()
 
         tracker.print_episode_status(q_count, correct, losses, "Train")
         tracker.plot_episode_status(q_count, correct, losses, "Train")

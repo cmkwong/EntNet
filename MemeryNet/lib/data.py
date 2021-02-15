@@ -163,14 +163,16 @@ def generate_data(embedding, token_stories, token_answers, word2int, fixed_lengt
     return DataSets
 
 class Episode_Tracker:
-    def __init__(self, int2word, path, writer, episode, write_episode):
+    def __init__(self, entNet, int2word, path, writer, episode, write_episode):
         """
+        :param entNet: nn.model
         :param int2word: dict: [2: "highway", 4: "bar", 1: "poland", ... ]
         :param path: str
         :param writer: tensorboard writer
         :param episode: int, current episode
         :param write_episode: int, output txt every the k episode
         """
+        self.entNet = entNet
         self.int2word = int2word
         self.path = path
         self.writer = writer
@@ -255,3 +257,7 @@ class Episode_Tracker:
         with open(main_path, 'a') as f:
             f.write(self.story_with_ans)
             f.close()
+
+    def weight_visualize(self):
+        for name, param in self.entNet.named_parameters():
+            self.writer.add_histogram(name, param)
