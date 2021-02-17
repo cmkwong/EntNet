@@ -258,6 +258,10 @@ class Episode_Tracker:
             f.write(self.story_with_ans)
             f.close()
 
-    def weight_visualize(self):
+    def weight_histogram(self):
         for name, param in self.entNet.named_parameters():
-            self.writer.add_histogram(name, param)
+            self.writer.add_histogram("hist_" + name, param)
+
+    def weight_image(self):
+        for name, param in self.entNet.named_parameters():
+            self.writer.add_image("image_" + name, param, global_step=self.episode, dataformats="HW")

@@ -24,9 +24,10 @@ SG_LOAD_NET = False
 # control for EntNet
 EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
-EntNet_TEST_EPOCH = 50
+EntNet_TEST_EPOCH = 100
 EntNet_STATE_EPOCH = 1000
-WEIGHT_VISUALIZE_EPOCH = 50
+WEIGHT_HIST_EPOCH = 100
+WEIGHT_IMAGE_EPOCH = 100
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 7
@@ -116,8 +117,8 @@ EntNET_FILE_SAVED = EntNET_FILE_FORMAT.format(DT_STRING, TRAIN_DATA_INDEX, VERSI
 EMBED_FILE_SAVED = EMBED_FILE_FORMAT.format(DT_STRING, "{}", EMBED_SIZE)
 
 # output runs file for monitoring progress in tensorboard (Skip-Gram / EntNet)
-SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/sg_qa" + '_T' + DT_STRING + str(TRAIN_DATA_INDEX) + '_Dim' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_V' + str(VERSION)
-EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/entnet_qa" + '_T' + DT_STRING + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_V' + str(VERSION)
+SG_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/T" + DT_STRING + "_sg_qa" + str(TRAIN_DATA_INDEX) + '_Dim' + str(EMBED_SIZE) + '_lr' + str(SG_LEARNING_RATE) + '_V' + str(VERSION)
+EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/T" + DT_STRING + "_entnet_qa" + str(TRAIN_DATA_INDEX) + '_lr' +  str(EntNET_LEARNING_RATE) + '_V' + str(VERSION)
 # tensorboard --logdir ~/projects/201119_EntNet/docs/3/runs --host localhost
 
 # output result.txt for inspection (EntNet)

@@ -110,8 +110,11 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
             with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE_SAVED.format(tracker.episode)), "wb") as f:
                 torch.save(checkpoint, f)
 
-        if tracker.episode % WEIGHT_VISUALIZE_EPOCH == 0:
-            tracker.weight_visualize()
+        if tracker.episode % WEIGHT_HIST_EPOCH == 0:
+            tracker.weight_histogram()
+
+        if tracker.episode % WEIGHT_IMAGE_EPOCH == 0:
+            tracker.weight_image()
 
         tracker.print_episode_status(q_count, correct, losses, "Train")
         tracker.plot_episode_status(q_count, correct, losses, "Train")
