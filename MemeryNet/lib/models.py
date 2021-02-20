@@ -128,10 +128,14 @@ class EntNet(nn.Module):
         predict = self.answer(dataset.Q)
         loss = criterion(predict, torch.tensor([dataset.ans], device=device))
         if mode == "Train":
-            optimizer.zero_grad()
-            loss.backward()
-            if self.record_allowed: self.record_params()
-            optimizer.step()
+            if dataset.end_story:
+                loss.backward()
+                if self.record_allowed: self.record_params()
+                optimizer.step()
+                optimizer.zero_grad()
+            else:
+                loss.backward()
+                if self.record_allowed: self.record_params()
         # detach the loss and predicted vector
         detached_loss = loss.detach().cpu().item()
         predict_ans = torch.argmax(predict.detach().cpu()).item() # get the ans value in integer
