@@ -1,30 +1,38 @@
-import logging
+import torch
+import numpy as np
+from torch import nn
+from codes.common_cmk import funcs
+from codes.MemeryNet.lib import descriptor
+import pickle
 
-logging.basicConfig(level=logging.INFO)
+class EntNet(nn.Module):
 
-class LoggedAgeAccess:
+    def __init__(self, W, input_size, H_size, X_size, Y_size, Z_size, R_size, K_size, device):
 
-    def __get__(self, obj, objtype=None):
-        value = obj._age
-        logging.info('Accessing %r giving %r', 'age', value)
-        return value
+        super(EntNet, self).__init__()
+        self.record_allowed = False
+        self.H_size = H_size
+        self.device = device
+        # dynamic memory
+        self.H = nn.init.normal_(torch.empty(H_size, dtype=torch.float, device=self.device), mean=0.0, std=0.1)
+        self.W = W.clone().detach()
 
-    def __set__(self, obj, value):
-        if obj.age_record:
-            logging.info('Updating %r to %r', 'age', value)
-            obj._age = value
+        # embedding parameters
+        self.params = nn.ParameterDict({
+            'F': nn.Parameter(nn.init.normal_(torch.empty(input_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
 
-class Person:
+            # shared parameters
+            'X': nn.Parameter(nn.init.normal_(torch.empty(X_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
+            'Y': nn.Parameter(nn.init.normal_(torch.empty(Y_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
+            'Z': nn.Parameter(nn.init.normal_(torch.empty(Z_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
 
-    age = LoggedAgeAccess()             # Descriptor instance
+            # answer parameters
+            'R': nn.Parameter(nn.init.normal_(torch.empty(R_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
+            'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1))
+        })
 
-    def __init__(self, name, age, age_record):
-        self.age_record = age_record
-        self.name = name                # Regular instance attribute
-        self.age = age                  # Calls __set__()
+        # dropout
+        self.dropout = nn.Dropout(p=0.3)
 
-    def birthday(self):
-        self.age += 1                   # Calls both __get__() and __set__()
-
-mary = Person("Mary M", 30, False)
-dave = Person('David D', 40, True)
+W = nn.init.normal_(torch.empty((64,36), dtype=torch.float, device="cuda"), mean=0.0, std=0.1)
+net = EntNet(W, input_size=(64,64), H_size=(64,64), X_size=(64,64), Y_size=(64,64), Z_size=(64,64), R_size=(64,64), K_size=(64,64), device="cuda")

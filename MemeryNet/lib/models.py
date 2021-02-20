@@ -25,8 +25,8 @@ class EntNet(nn.Module):
         self.H_size = H_size
         self.device = device
         # dynamic memory
-        self.H = nn.init.normal_(torch.empty(H_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)
-        self.W = W.clone().detach().requires_grad_(True)
+        self.H = nn.init.normal_(torch.empty(H_size, dtype=torch.float, device=self.device), mean=0.0, std=0.1)
+        self.W = W.clone().detach()
 
         # embedding parameters
         self.params = nn.ParameterDict({
