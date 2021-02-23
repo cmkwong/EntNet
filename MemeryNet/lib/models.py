@@ -134,7 +134,7 @@ class EntNet(nn.Module):
                 optimizer.step()
                 optimizer.zero_grad()
             else:
-                loss.backward()
+                loss.backward(retain_graph=True)
                 if self.record_allowed: self.record_params()
         # detach the loss and predicted vector
         detached_loss = loss.detach().cpu().item()
@@ -180,7 +180,7 @@ class EntNet(nn.Module):
             self.H = nn.init.normal_(self.H).detach()
         else:
             if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
-            self.H = self.H.detach()
+            # self.H = self.H.detach()
 
     def unit_params(self, name, dim):
         magnitude = self.params[name].data.detach().pow(2).sum(dim=dim).sqrt().unsqueeze(dim=dim)
