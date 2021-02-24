@@ -78,7 +78,7 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
                     correct += 1
 
                 # print the story for inspect
-                if tracker.episode % EntNet_TEST_EPOCH == 0:
+                if tracker.episode % EntNet_RESULT_EPOCH == 0:
                     tracker.write(T.stories, T.q, predict_ans, T.ans, T.new_story, T.end_story, "Train")
 
                 q_count += 1

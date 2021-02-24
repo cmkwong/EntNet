@@ -254,6 +254,7 @@ class Episode_Tracker:
         else:
             file_name = INCORRECT_FILE_NAME.format(type, self.episode)
         main_path = self.path + '/' + file_name
+        os.makedirs(os.path.dirname(main_path), exist_ok=True)
         with open(main_path, 'a') as f:
             f.write(self.story_with_ans)
             f.close()

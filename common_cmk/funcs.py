@@ -20,7 +20,7 @@ def unitVector_2d(tensors, dim=0):
     :param tensors: torch.Tensor(size=(n,m))
     :return: return normalized torch.Tensor(size=(n,m))
     """
-    magnitude = tensors.pow(2).sum(dim=dim).sqrt().unsqueeze(dim)
+    magnitude = tensors.detach().pow(2).sum(dim=dim).sqrt().unsqueeze(dim)
     unit_tensors = tensors / magnitude
     return unit_tensors
 

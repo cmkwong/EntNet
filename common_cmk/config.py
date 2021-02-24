@@ -25,6 +25,7 @@ SG_LOAD_NET = False
 EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 100
+EntNet_RESULT_EPOCH = 1000
 EntNet_STATE_EPOCH = 10000
 WEIGHT_HIST_EPOCH = 100
 WEIGHT_IMAGE_EPOCH = 100
@@ -122,9 +123,9 @@ EntNet_TENSORBOARD_SAVE_PATH = MAIN_PATH + str(VERSION) + "/runs/T" + DT_STRING 
 # tensorboard --logdir ~/projects/201119_EntNet/docs/3/runs --host localhost
 
 # output result.txt for inspection (EntNet)
-RESULT_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/results"
-INCORRECT_FILE_NAME = "T" + DT_STRING + "_QA"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}.txt"
-CORRECT_FILE_NAME = "T" + DT_STRING + "_QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}.txt"
+RESULT_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/results/T" + DT_STRING
+INCORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Incorrect-E{}.txt"
+CORRECT_FILE_NAME = "QA"+ str(TRAIN_DATA_INDEX) +"-{}-Correct-E{}.txt"
 
 # output state, params and gradient for inspection (EntNet)
 STATE_CHECKING_PATH = MAIN_PATH + str(VERSION) + "/state"

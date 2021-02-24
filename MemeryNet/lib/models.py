@@ -168,7 +168,7 @@ class EntNet(nn.Module):
         self.q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
         self.p = nn.Softmax(dim=1)(torch.mm(self.q.t(), self.H))  # (1*m)
         self.u = torch.mul(self.p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
-        self.unit_params('R', dim=1)
+        # self.unit_params('R', dim=1)
         self.ans_vector = torch.mm(self.params['R'], nn.Sigmoid()(self.q + torch.mm(self.params['K'], self.u)))  # (k,1)
         self.ans = nn.LogSoftmax(dim=1)(self.ans_vector.t())
         return self.ans
@@ -180,7 +180,6 @@ class EntNet(nn.Module):
             self.H = nn.init.normal_(self.H).detach()
         else:
             if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
-            # self.H = self.H.detach()
 
     def unit_params(self, name, dim):
         magnitude = self.params[name].data.detach().pow(2).sum(dim=dim).sqrt().unsqueeze(dim=dim)
