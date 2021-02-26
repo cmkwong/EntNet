@@ -29,7 +29,7 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
     SkipGram_Net = collections.namedtuple("SkipGram_Net", ["weights", "embedding", "embedding_arr", "token_count", "int2word", "word2int"])
 
     # Load the embedding
-    print("Loading Embedding ...", end=' ')
+    print("Loading Embedding: {} ...".format(embedding_file), end=' ')
     with open(os.path.join(path, embedding_file), "rb") as f:
         checkpoint = torch.load(f)
     weights = checkpoint['state_dict']['in_embed.weight']
@@ -39,7 +39,7 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
     print("Successful!")
 
     # load the int2word and word2int files
-    print("Loading word2int and int2word files ...",end=' ')
+    print("Loading {} and {} ...".format(word2int_file, int2word_file),end=' ')
     SkipGram_Net.int2word = readFile.read_dict(path, int2word_file)
     SkipGram_Net.word2int = readFile.read_dict(path, word2int_file)
     print("Successful!")

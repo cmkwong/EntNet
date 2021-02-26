@@ -36,10 +36,15 @@ class EntNet(nn.Module):
             'X': nn.Parameter(nn.init.normal_(torch.empty(X_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
             'Y': nn.Parameter(nn.init.normal_(torch.empty(Y_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
             'Z': nn.Parameter(nn.init.normal_(torch.empty(Z_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
+            'X_b': nn.Parameter(torch.zeros(H_size, requires_grad=True, dtype=torch.float, device=self.device)),
+            'Y_b': nn.Parameter(torch.zeros(H_size, requires_grad=True, dtype=torch.float, device=self.device)),
+            'Z_b': nn.Parameter(torch.zeros((Z_size[0], 1), requires_grad=True, dtype=torch.float, device=self.device)),
 
             # answer parameters
             'R': nn.Parameter(nn.init.normal_(torch.empty(R_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
-            'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1))
+            'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
+            'R_b': nn.Parameter(torch.zeros((R_size[0], 1), requires_grad=True, dtype=torch.float, device=self.device)),
+            'K_b': nn.Parameter(torch.zeros((K_size[0], 1), requires_grad=True, dtype=torch.float, device=self.device))
         })
 
         # dropout
@@ -47,6 +52,70 @@ class EntNet(nn.Module):
 
         # init records setting
         self.reset_record_status()
+
+    def forward(self, E_s, new_story=True):
+        """
+        k = sentence length
+        m = memory size
+        :param E_s: [ torch.tensor = facts in word embeddings ]
+        :return: ans_vector (n,1)
+        """
+        self.prepare_memory(new_story)
+        for E in E_s:
+            # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
+            self.s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
+            self.G = nn.Softmax(dim=1)((torch.mm(self.s.t(), self.H) + torch.mm(self.s.t(), self.W)))  # (1*m)
+            self.new_H = nn.Sigmoid()(  torch.addmm(self.params['X_b'], self.dropout(self.params['X']), self.H) +
+                                        torch.addmm(self.params['Y_b'], self.dropout(self.params['Y']), self.W) +
+                                        torch.addmm(self.params['Z_b'], self.dropout(self.params['Z']), self.s))  # (64*m)
+            self.H = funcs.unitVector_2d(self.H + torch.mul(self.G, self.new_H), dim=0)  # (64*m)
+
+    def answer(self, Q):
+        """
+        :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
+        :return: ans_vector (n,1)
+        """
+        # answer the question
+        Q.requires_grad_()
+        self.q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
+        self.p = nn.Softmax(dim=1)(torch.mm(self.q.t(), self.H))  # (1*m)
+        self.u = torch.mul(self.p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
+        # self.unit_params('R', dim=1)
+        self.ans_vector = torch.addmm(
+            self.params['R_b'], self.params['R'], nn.Sigmoid()(self.q + torch.addmm(
+                self.params['K_b'], self.params['K'], self.u))
+        )
+        self.ans = nn.LogSoftmax(dim=1)(self.ans_vector.t())
+        return self.ans
+
+    def run_model(self, dataset, criterion, optimizer, device, mode="train"):
+        """
+        :param dataset: collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
+        :param criterion: criterion
+        :param optimizer: optimizer
+        :param mode: string: train/test
+        :return: detached_loss, predict_ans
+        """
+        if mode == "Train":
+            self.train()
+        elif mode == "Test":
+            self.eval()
+        self.forward(dataset.E_s, new_story=dataset.new_story)
+        predict = self.answer(dataset.Q)
+        loss = criterion(predict, torch.tensor([dataset.ans], device=device))
+        if mode == "Train":
+            if dataset.end_story:
+                loss.backward()
+                if self.record_allowed: self.record_params()
+                optimizer.step()
+                optimizer.zero_grad()
+            else:
+                loss.backward(retain_graph=True)
+                if self.record_allowed: self.record_params()
+        # detach the loss and predicted vector
+        detached_loss = loss.detach().cpu().item()
+        predict_ans = torch.argmax(predict.detach().cpu()).item() # get the ans value in integer
+        return detached_loss, predict_ans
 
     def reset_record_status(self):
         self.story_index = 0
@@ -111,67 +180,6 @@ class EntNet(nn.Module):
             pickle.dump(self.state_path, f, pickle.HIGHEST_PROTOCOL)
         # init records setting
         self.reset_record_status()
-
-    def run_model(self, dataset, criterion, optimizer, device, mode="train"):
-        """
-        :param dataset: collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
-        :param criterion: criterion
-        :param optimizer: optimizer
-        :param mode: string: train/test
-        :return: detached_loss, predict_ans
-        """
-        if mode == "Train":
-            self.train()
-        elif mode == "Test":
-            self.eval()
-        self.forward(dataset.E_s, new_story=dataset.new_story)
-        predict = self.answer(dataset.Q)
-        loss = criterion(predict, torch.tensor([dataset.ans], device=device))
-        if mode == "Train":
-            if dataset.end_story:
-                loss.backward()
-                if self.record_allowed: self.record_params()
-                optimizer.step()
-                optimizer.zero_grad()
-            else:
-                loss.backward(retain_graph=True)
-                if self.record_allowed: self.record_params()
-        # detach the loss and predicted vector
-        detached_loss = loss.detach().cpu().item()
-        predict_ans = torch.argmax(predict.detach().cpu()).item() # get the ans value in integer
-        return detached_loss, predict_ans
-
-    def forward(self, E_s, new_story=True):
-        """
-        k = sentence length
-        m = memory size
-        :param E_s: [ torch.tensor = facts in word embeddings ]
-        :return: ans_vector (n,1)
-        """
-        self.prepare_memory(new_story)
-        for E in E_s:
-            # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
-            self.s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
-            self.G = nn.Softmax(dim=1)((torch.mm(self.s.t(), self.H) + torch.mm(self.s.t(), self.W)))  # (1*m)
-            self.new_H = nn.Sigmoid()(torch.mm(self.dropout(self.params['X']), self.H) +
-                                 torch.mm(self.dropout(self.params['Y']), self.W) +
-                                 torch.mm(self.dropout(self.params['Z']), self.s))  # (64*m)
-            self.H = funcs.unitVector_2d(self.H + torch.mul(self.G, self.new_H), dim=0)  # (64*m)
-
-    def answer(self, Q):
-        """
-        :param Q: torch.tensor = Questions in word embeddings (n,PAD_MAX_LENGTH)
-        :return: ans_vector (n,1)
-        """
-        # answer the question
-        Q.requires_grad_()
-        self.q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
-        self.p = nn.Softmax(dim=1)(torch.mm(self.q.t(), self.H))  # (1*m)
-        self.u = torch.mul(self.p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
-        # self.unit_params('R', dim=1)
-        self.ans_vector = torch.mm(self.params['R'], nn.Sigmoid()(self.q + torch.mm(self.params['K'], self.u)))  # (k,1)
-        self.ans = nn.LogSoftmax(dim=1)(self.ans_vector.t())
-        return self.ans
 
     def prepare_memory(self, new_story):
         if new_story:

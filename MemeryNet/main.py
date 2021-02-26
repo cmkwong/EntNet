@@ -30,17 +30,17 @@ test_set = data.generate_data(SkipGram_Net.embedding, Test.token_stories, Test.t
                                fixed_length=PAD_MAX_LENGTH, device=DEVICE)
 
 if EntNet_LOAD_NET:
-    print("Loading net params...", end=' ')
+    print("Loading net params: {}...".format(EntNET_FILE), end=' ')
     with open(os.path.join(SAVE_EntNET_PATH, EntNET_FILE), "rb") as f:
         checkpoint = torch.load(f)
     entNet.load_state_dict(checkpoint['state_dict'])
     print("Successful!")
-    episode = int(re.findall('Epoch-(\d+)', EntNET_FILE)[0])
+    episode = int(re.findall('Epoch(\d+)', EntNET_FILE)[0])
 else:
     episode = 1
 
 if EntNet_LOAD_INIT:
-    print("Loading init net params...", end=' ')
+    print("Loading init net params: {}...".format(EntNET_INIT_FILE), end=' ')
     with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE), "rb") as f:
         checkpoint = torch.load(f)
     entNet.load_state_dict(checkpoint['state_dict'])
