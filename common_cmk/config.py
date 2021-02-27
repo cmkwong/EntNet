@@ -29,8 +29,8 @@ EntNet_RESULT_EPOCH = 1000
 EntNet_STATE_EPOCH = 10000
 WEIGHT_HIST_EPOCH = 100
 WEIGHT_IMAGE_EPOCH = 100
-EntNet_LOAD_NET = True
-EntNet_LOAD_INIT = False
+EntNet_LOAD_NET = False
+EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 7
 TIME = "210129001704"
 
@@ -44,8 +44,7 @@ LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 EntNET_FILE_FORMAT = "T{}_checkpoint-entNet-STORY{}-VERSION{}-Epoch{}.data"    # Save Format
 EntNET_FILE = EntNET_FILE_FORMAT.format("210225112817", 2, 10, 9500)           # load weight file
 EntNET_INIT_FILE_FORMAT = "T{}_init-entNet-VERSION{}.data"
-# EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format(5, TIME) # 10 padding
-EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210131132549", 6) # 7 padding
+EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210225112817", 10) # 7 padding
 
 
 # ------------------------------------------------------------------------------------------------------------- #

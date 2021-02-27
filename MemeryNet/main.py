@@ -38,17 +38,16 @@ if EntNet_LOAD_NET:
     episode = int(re.findall('Epoch(\d+)', EntNET_FILE)[0])
 else:
     episode = 1
-
-if EntNet_LOAD_INIT:
-    print("Loading init net params: {}...".format(EntNET_INIT_FILE), end=' ')
-    with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE), "rb") as f:
-        checkpoint = torch.load(f)
-    entNet.load_state_dict(checkpoint['state_dict'])
-    print("Successful!")
-else:
-    checkpoint = {"state_dict": entNet.state_dict()}
-    with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE_SAVED), "wb") as f:
-        torch.save(checkpoint, f)
+    if EntNet_LOAD_INIT:
+        print("Loading init net params: {}...".format(EntNET_INIT_FILE), end=' ')
+        with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE), "rb") as f:
+            checkpoint = torch.load(f)
+        entNet.load_state_dict(checkpoint['state_dict'])
+        print("Successful!")
+    else:
+        checkpoint = {"state_dict": entNet.state_dict()}
+        with open(os.path.join(SAVE_EntNET_PATH, EntNET_INIT_FILE_SAVED), "wb") as f:
+            torch.save(checkpoint, f)
 
 # optimizer
 optimizer = optim.Adam(entNet.parameters(), lr=EntNET_LEARNING_RATE)
