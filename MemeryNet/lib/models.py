@@ -25,7 +25,7 @@ class EntNet(nn.Module):
         self.H_size = H_size
         self.device = device
         # dynamic memory
-        self.H = nn.init.normal_(torch.empty(H_size, dtype=torch.float, device=self.device), mean=0.0, std=0.1)
+        self.H = torch.zeros(H_size, dtype=torch.float, device=self.device)
         self.W = W.clone().detach()
 
         # embedding parameters
@@ -185,7 +185,7 @@ class EntNet(nn.Module):
         if new_story:
             self.init_record_status_for_new_story()
             if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
-            self.H = nn.init.normal_(self.H).detach()
+            self.H = torch.zeros(self.H.shape, dtype=torch.float, device=self.device)
         else:
             if self.record_allowed: self.state_path[self.story_index].append('params')  # beginning at each start of story-question pair
 
