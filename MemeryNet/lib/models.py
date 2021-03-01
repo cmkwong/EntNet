@@ -41,6 +41,7 @@ class EntNet(nn.Module):
             'Z_b': nn.Parameter(torch.zeros((Z_size[0], 1), requires_grad=True, dtype=torch.float, device=self.device)),
 
             # answer parameters
+            'D': nn.Parameter(nn.init.normal_(torch.empty(input_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
             'R': nn.Parameter(nn.init.normal_(torch.empty(R_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
             'K': nn.Parameter(nn.init.normal_(torch.empty(K_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
             'R_b': nn.Parameter(torch.zeros((R_size[0], 1), requires_grad=True, dtype=torch.float, device=self.device)),
@@ -76,8 +77,7 @@ class EntNet(nn.Module):
         :return: ans_vector (n,1)
         """
         # answer the question
-        Q.requires_grad_()
-        self.q = torch.mul(self.params['F'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
+        self.q = torch.mul(self.params['D'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
         self.p = nn.Softmax(dim=1)(torch.mm(self.q.t(), self.H))  # (1*m)
         self.u = torch.mul(self.p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
         # self.unit_params('R', dim=1)
