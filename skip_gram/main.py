@@ -39,6 +39,13 @@ writer = SummaryWriter(log_dir=SG_TENSORBOARD_SAVE_PATH, comment="Skip_Gram")
 epoch, steps = 0, 0
 # train for some number of epochs
 while True:
+
+    # save the embedding layer
+    if epoch % SG_SAVE_EPOCH == 0:
+        checkpoint = {"state_dict": model.state_dict()}
+        with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE_SAVED.format(epoch)), "wb") as f:
+            torch.save(checkpoint, f)
+
     episode_loss = []
     for inputs, targets in data.get_batches(words, SG_BATCH_SIZE, window_size=1):
 
@@ -72,12 +79,6 @@ while True:
             print("...\n")
 
         steps += 1
-
-    # save the embedding layer
-    if epoch % SG_SAVE_EPOCH == 0 and epoch > 0:
-        checkpoint = {"state_dict": model.state_dict()}
-        with open(os.path.join(SAVE_EMBED_PATH, EMBED_FILE_SAVED.format(epoch)), "wb") as f:
-            torch.save(checkpoint, f)
 
     if epoch % SG_WRITE_EPOCH == 0 and epoch > 0:
         results = {}

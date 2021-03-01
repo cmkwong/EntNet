@@ -30,13 +30,13 @@ EntNet_STATE_EPOCH = 10000
 WEIGHT_HIST_EPOCH = 100
 WEIGHT_IMAGE_EPOCH = 100
 EntNet_LOAD_NET = False
-EntNet_LOAD_INIT = False
+EntNet_LOAD_INIT = True
 PAD_MAX_LENGTH = 7
-TIME = "210129001704"
 
-# Embedding
+# Embedding (EntNet for loading)
+TIME = "210301101946"
 EMBED_FILE_FORMAT = "T{}-embedding-Epoch{}-Dim{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(TIME, 6000, 64)     # load weight file
+EMBED_FILE = EMBED_FILE_FORMAT.format(TIME, 0, 64)     # load weight file (Excep this for loaded by Skip-gram)
 LOADED_INT2WORD = "T" + TIME + "-int2word.txt"  # loaded for entNet
 LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 
@@ -44,7 +44,7 @@ LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 EntNET_FILE_FORMAT = "T{}_checkpoint-entNet-STORY{}-VERSION{}-Epoch{}.data"    # Save Format
 EntNET_FILE = EntNET_FILE_FORMAT.format("210225112817", 2, 10, 9500)           # load weight file
 EntNET_INIT_FILE_FORMAT = "T{}_init-entNet-VERSION{}.data"
-EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210225112817", 10) # 7 padding
+EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210228084838", 11) # 7 padding
 
 
 # ------------------------------------------------------------------------------------------------------------- #
