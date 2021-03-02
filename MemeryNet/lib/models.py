@@ -78,7 +78,7 @@ class EntNet(nn.Module):
         """
         # answer the question
         self.q = torch.mul(self.params['D'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
-        self.p = nn.Softmax(dim=1)(torch.mm(self.q.t(), self.H))  # (1*m)
+        self.p = nn.Sigmoid()(torch.mm(self.q.t(), self.H))  # (1*m)
         self.u = torch.mul(self.p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
         # self.unit_params('R', dim=1)
         self.ans_vector = torch.addmm(
