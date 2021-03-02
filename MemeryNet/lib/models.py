@@ -65,7 +65,7 @@ class EntNet(nn.Module):
         for E in E_s:
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
             self.s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
-            self.G = nn.Softmax(dim=1)((torch.mm(self.s.t(), self.H) + torch.mm(self.s.t(), self.W)))  # (1*m)
+            self.G = nn.Sigmoid()((torch.mm(self.s.t(), self.H) + torch.mm(self.s.t(), self.W)))  # (1*m)
             self.new_H = nn.Sigmoid()(  torch.addmm(self.params['X_b'], self.params['X'], self.H) +
                                         torch.addmm(self.params['Y_b'], self.params['Y'], self.W) +
                                         torch.addmm(self.params['Z_b'], self.params['Z'], self.s))  # (64*m)

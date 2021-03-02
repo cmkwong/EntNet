@@ -42,7 +42,7 @@ LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 
 # EntNet (Weight and init weight)
 EntNET_FILE_FORMAT = "T{}_checkpoint-entNet-STORY{}-VERSION{}-Epoch{}.data"    # Save Format
-EntNET_FILE = EntNET_FILE_FORMAT.format("210225112817", 2, 10, 9500)           # load weight file
+EntNET_FILE = EntNET_FILE_FORMAT.format("210301103241", 2, 11, 5500)           # load weight file
 EntNET_INIT_FILE_FORMAT = "T{}_init-entNet-VERSION{}.data"
 EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210228084838", 11) # 7 padding
 
