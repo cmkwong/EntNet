@@ -112,7 +112,7 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
         if tracker.episode % WEIGHT_HIST_EPOCH == 0:
             tracker.weight_histogram()
 
-        if tracker.episode % WEIGHT_IMAGE_EPOCH == 0:
+        if tracker.episode % WEIGHT_IMAGE_EPOCH == 0 and False:
             tracker.weight_image()
 
         tracker.print_episode_status(q_count, correct, losses, "Train")

@@ -28,6 +28,9 @@ class EntNet(nn.Module):
         self.H = torch.zeros(H_size, dtype=torch.float, device=self.device)
         self.W = W.clone().detach()
 
+        # learnable activation layer
+        self.prelu_newH = nn.PReLU(num_parameters=input_size[0], init=1.0).to(self.device)
+
         # embedding parameters
         self.params = nn.ParameterDict({
             'F': nn.Parameter(nn.init.normal_(torch.empty(input_size, requires_grad=True, dtype=torch.float, device=self.device), mean=0.0, std=0.1)),
@@ -66,9 +69,10 @@ class EntNet(nn.Module):
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
             self.s = torch.mul(self.params['F'], E).sum(dim=1).unsqueeze(1)  # (64*1)
             self.G = nn.Sigmoid()((torch.mm(self.s.t(), self.H) + torch.mm(self.s.t(), self.W)))  # (1*m)
-            self.new_H = nn.Sigmoid()(  torch.addmm(self.params['X_b'], self.params['X'], self.H) +
-                                        torch.addmm(self.params['Y_b'], self.params['Y'], self.W) +
-                                        torch.addmm(self.params['Z_b'], self.params['Z'], self.s))  # (64*m)
+            self.new_H = (  torch.addmm(self.params['X_b'], self.params['X'], self.H) +
+                            torch.addmm(self.params['Y_b'], self.params['Y'], self.W) +
+                            torch.addmm(self.params['Z_b'], self.params['Z'], self.s))  # (64*m)
+            self.new_H = self.prelu_newH(self.new_H.t()).t()
             self.H = funcs.unitVector_2d(self.H + torch.mul(self.G, self.new_H), dim=0)  # (64*m)
 
     def answer(self, Q):
@@ -78,7 +82,7 @@ class EntNet(nn.Module):
         """
         # answer the question
         self.q = torch.mul(self.params['D'], Q).sum(dim=1).unsqueeze(1)  # (64*1)
-        self.p = nn.Sigmoid()(torch.mm(self.q.t(), self.H))  # (1*m)
+        self.p = nn.Softmax(dim=1)(torch.mm(self.q.t(), self.H))  # (1*m)
         self.u = torch.mul(self.p, self.H).sum(dim=1).unsqueeze(1)  # (64*1)
         # self.unit_params('R', dim=1)
         self.ans_vector = torch.addmm(
