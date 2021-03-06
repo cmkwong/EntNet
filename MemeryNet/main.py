@@ -4,6 +4,7 @@ import torch
 import torch.optim as optim
 import os
 import re
+import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 # Read the token_count, int2word, word2int
@@ -64,8 +65,14 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
         else:
             entNet.record_allowed = False
 
+        # shuffle the story
+        shuffle_num = np.arange(len(train_set))
+        if SHUFFLE_TRAIN:
+            np.random.shuffle(shuffle_num)
+
         # training
-        for story_i, story in train_set.items():
+        for index in shuffle_num:
+            story = train_set[index]
             for T in story:
 
                 # run the model
@@ -84,9 +91,15 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
 
         # testing
         if tracker.episode % EntNet_TEST_EPOCH == 0:
+            # init
             test_q_count, test_correct, test_losses = 0,0,0
             entNet.record_allowed = False
-            for story_i, story in test_set.items():
+            # shuffle
+            shuffle_num = np.arange(len(test_set))
+            if SHUFFLE_TRAIN:
+                np.random.shuffle(shuffle_num)
+            for index in shuffle_num:
+                story = test_set[index]
                 for t in story:
 
                     loss, predict_ans = entNet.run_model(t, criterion, None, DEVICE, mode="Test")
