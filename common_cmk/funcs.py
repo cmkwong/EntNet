@@ -21,8 +21,8 @@ def unitVector_2d(tensors, dim=0):
     :return: return normalized torch.Tensor(size=(n,m))
     """
     magnitude = tensors.detach().pow(2).sum(dim=dim).sqrt().unsqueeze(dim)
-    unit_tensors = tensors / magnitude
-    return unit_tensors
+    tensors = tensors / magnitude
+    return tensors
 
 def unitVector_3d(tensors, dim=1):
     """
