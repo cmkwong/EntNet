@@ -60,10 +60,10 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
 
         q_count, correct, losses = 0, 0, 0
         # record the state before backpropagation
-        if tracker.episode % EntNet_STATE_EPOCH == 0:
-            entNet.record_allowed = True
-        else:
-            entNet.record_allowed = False
+        # if tracker.episode % EntNet_STATE_EPOCH == 0:
+        #     entNet.record_allowed = True
+        # else:
+        #     entNet.record_allowed = False
 
         # shuffle the story
         shuffle_num = np.arange(len(train_set))
@@ -93,7 +93,7 @@ with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, w
         if tracker.episode % EntNet_TEST_EPOCH == 0:
             # init
             test_q_count, test_correct, test_losses = 0,0,0
-            entNet.record_allowed = False
+            # entNet.record_allowed = False
             # shuffle
             shuffle_num = np.arange(len(test_set))
             if SHUFFLE_TRAIN:

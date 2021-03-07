@@ -6,7 +6,7 @@ DT_STRING = now.strftime("%y%m%d%H%M%S")
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
 # ------------------------------------------------------------------------------------------------------------- #
 
-VERSION = 12
+VERSION = 13
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
@@ -44,7 +44,7 @@ LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 
 # EntNet (Weight and init weight)
 EntNET_FILE_FORMAT = "T{}_checkpoint-entNet-STORY{}-VERSION{}-Epoch{}.data"    # Save Format
-EntNET_FILE = EntNET_FILE_FORMAT.format("210301103241", 2, 11, 5500)           # load weight file
+EntNET_FILE = EntNET_FILE_FORMAT.format("210306204255", 2, 12, 5500)           # load weight file
 EntNET_INIT_FILE_FORMAT = "T{}_init-entNet-VERSION{}.data"
 EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210304122549", 12) # 7 padding
 
