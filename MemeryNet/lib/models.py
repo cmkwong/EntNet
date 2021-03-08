@@ -74,7 +74,7 @@ class EntNet(nn.Module):
         self.ans = nn.LogSoftmax(dim=1)(self.ans_vector.t())
         return self.ans
 
-    def run_model(self, dataset, criterion, optimizer, device, mode="train"):
+    def run_model(self, dataset, criterion, optimizer, device, mode="Train"):
         """
         :param dataset: collections.namedtuple('DataSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
         :param criterion: criterion

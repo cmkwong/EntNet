@@ -10,7 +10,7 @@ VERSION = 13
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
-TRAIN_DATA_INDEX = 2
+TRAIN_DATA_INDEX = 1
 
 # control for skip-gram
 SG_LEARNING_RATE = 0.00001
@@ -36,7 +36,7 @@ EntNet_LOAD_INIT = False
 PAD_MAX_LENGTH = 7
 
 # Embedding (EntNet for loading)
-TIME = "210301101946"
+TIME = "210308181206" # 210301101946
 EMBED_FILE_FORMAT = "T{}-embedding-Epoch{}-Dim{}.data"   # Save Format
 EMBED_FILE = EMBED_FILE_FORMAT.format(TIME, 0, 64)     # load weight file (Excep this for loaded by Skip-gram)
 LOADED_INT2WORD = "T" + TIME + "-int2word.txt"  # loaded for entNet
