@@ -32,7 +32,7 @@ WEIGHT_IMAGE_EPOCH = 100
 SHUFFLE_TRAIN = True
 SHUFFLE_TEST = False
 EntNet_LOAD_NET = False
-EntNet_LOAD_INIT = True
+EntNet_LOAD_INIT = False
 PAD_MAX_LENGTH = 7
 
 # Embedding (EntNet for loading)
