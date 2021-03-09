@@ -15,7 +15,7 @@ class EntNet(nn.Module):
         self.W = W.clone().detach().t()
 
         # learnable activation layer
-        self.activation = nn.LeakyReLU(negative_slope=0.01).to(self.device)
+        # self.activation = nn.LeakyReLU(negative_slope=0.01).to(self.device)
 
         # embedding parameters
         self.params = nn.ParameterDict({
@@ -38,7 +38,7 @@ class EntNet(nn.Module):
         })
 
         # dropout
-        self.dropout = nn.Dropout(p=0.3)
+        # self.dropout = nn.Dropout(p=0.3)
 
     def forward(self, E_s, new_story=True):
         """
@@ -55,7 +55,8 @@ class EntNet(nn.Module):
             self.new_H = nn.Sigmoid()(   torch.addmm(self.params['X_b'], self.H, self.params['X']) +
                                             torch.addmm(self.params['Y_b'], self.W, self.params['Y']) +
                                             torch.addmm(self.params['Z_b'], self.s, self.params['Z']))  # (m*64)
-            self.H = funcs.unitVector_2d(self.H + torch.mul(self.G, self.new_H), dim=1)  # (m*64)
+            # self.H = funcs.unitVector_2d(self.H + torch.mul(self.G, self.new_H), dim=1)  # (m*64)
+            self.H = 0.4 * self.H + 0.6 * torch.mul(self.G, self.new_H)
 
     def answer(self, Q):
         """
