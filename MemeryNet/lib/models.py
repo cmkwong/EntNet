@@ -85,7 +85,7 @@ class EntNet(nn.Module):
         if mode == "Train":
             self.train()
         elif mode == "Test":
-            self.eval()
+            self.train()
         self.forward(dataset.E_s, new_story=dataset.new_story)
         predict = self.answer(dataset.Q)
         loss = criterion(predict, torch.tensor([dataset.ans], device=device))
