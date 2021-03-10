@@ -14,7 +14,7 @@ TRAIN_DATA_INDEX = 2
 
 # control for skip-gram
 SG_LEARNING_RATE = 0.00001
-EMBED_SIZE = 64
+EMBED_SIZE = 16
 SG_SAVE_EPOCH = 1000
 SG_PRINT_STEPS = 1000
 SG_WRITE_EPOCH = 1000
@@ -36,9 +36,9 @@ EntNet_LOAD_INIT = False
 PAD_MAX_LENGTH = 7
 
 # Embedding (EntNet for loading)
-TIME = "210301101946" # 210308181206 - 1
+TIME = "210309220328" # 210308181206 - 1
 EMBED_FILE_FORMAT = "T{}-embedding-Epoch{}-Dim{}.data"   # Save Format
-EMBED_FILE = EMBED_FILE_FORMAT.format(TIME, 0, 64)     # load weight file (Excep this for loaded by Skip-gram)
+EMBED_FILE = EMBED_FILE_FORMAT.format(TIME, 0, 16)     # load weight file (Excep this for loaded by Skip-gram)
 LOADED_INT2WORD = "T" + TIME + "-int2word.txt"  # loaded for entNet
 LOADED_WORD2INT = "T" + TIME + "-word2int.txt"  # loaded for entNet
 
