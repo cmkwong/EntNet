@@ -13,9 +13,9 @@ Train = data.translate_story_into_token(DATA_PATH, TRAIN_SET_NAME[TRAIN_DATA_IND
 Test = data.translate_story_into_token(DATA_PATH, TEST_SET_NAME[TRAIN_DATA_INDEX], SkipGram_Net.word2int)
 
 # Load the model
-embed_size = SkipGram_Net.weights.size()[1] # 64
+embed_size = SkipGram_Net.weights.size()[1] # 16
 M_SLOTS = SkipGram_Net.weights.t().size()[1]
-entNet = models.EntNet(W=SkipGram_Net.weights.t(), embed_size=embed_size, m_slots=M_SLOTS, sentc_max_len=PAD_MAX_LENGTH, device=DEVICE)
+entNet = models.EntNet(W=SkipGram_Net.weights, embed_size=embed_size, m_slots=M_SLOTS, sentc_max_len=PAD_MAX_LENGTH, device=DEVICE)
 
 # generate training and test set
 train_set = data.generate_data(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,

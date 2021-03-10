@@ -12,7 +12,7 @@ class EntNet(nn.Module):
         self.device = device
         # dynamic memory
         self.H = torch.zeros((m_slots, embed_size), dtype=torch.float, device=self.device)
-        self.W = W.clone().detach().t()
+        self.W = W.clone().detach()
 
         # learnable activation layer
         # self.activation = nn.LeakyReLU(negative_slope=0.01).to(self.device)
@@ -50,7 +50,7 @@ class EntNet(nn.Module):
         self.prepare_memory(new_story)
         for E in E_s:
             # E = torch.tensor(data=E, requires_grad=True, dtype=torch.float)   # (64*k)
-            self.s = torch.mul(self.params['F'], E.t()).sum(dim=0).unsqueeze(0)  # (1*64)
+            self.s = torch.mul(self.params['F'], E).sum(dim=0).unsqueeze(0)  # (1*64)
             self.G = nn.Sigmoid()((torch.mm(self.H, self.s.t()) + torch.mm(self.W, self.s.t())))  # (m*1)
             self.new_H = nn.Sigmoid()(   torch.addmm(self.params['X_b'], self.H, self.params['X']) +
                                             torch.addmm(self.params['Y_b'], self.W, self.params['Y']) +
@@ -64,7 +64,7 @@ class EntNet(nn.Module):
         :return: ans_vector (n,1)
         """
         # answer the question
-        self.q = torch.mul(self.params['D'], Q.t()).sum(dim=0).unsqueeze(0)  # (1*64)
+        self.q = torch.mul(self.params['D'], Q).sum(dim=0).unsqueeze(0)  # (1*64)
         self.p = nn.Softmax(dim=0)(torch.mm(self.H, self.q.t()))  # (m*1)
         self.u = torch.mul(self.p, self.H).sum(dim=0).unsqueeze(0)  # (1*64)
         # self.unit_params('R', dim=1)

@@ -5,7 +5,25 @@ from codes.common_cmk import readFile, funcs
 import collections
 import os
 
-def sentc2e(embedding, sentc_ints, fixed_length=6, device="cuda"):
+def fill_zeros(embedding, max_length, dim, device="cuda"):
+    """
+    :param embedding: 2d tensor
+    :param max_length: int
+    :param dim: int
+    :return:
+    """
+    assert (max_length - embedding.shape[dim] >= 0, "max sentence length should be larger or equal than padding length")
+    zeros = None
+    length = max_length - embedding.shape[dim]
+    # create zero tensor, size depend on the dim required
+    if dim == 0:
+        zeros = torch.zeros((length, embedding.shape[1])).to(device)
+    elif dim == 1:
+        zeros = torch.zeros((embedding.shape[0], length)).to(device)
+    required_embedding = torch.cat((embedding, zeros), dim=dim)
+    return required_embedding
+
+def sentc2e(embedding, sentc_ints, fixed_length, device="cuda"):
     """
     :param embedding: nn.Embedding
     :param sentc_ints: [int] / int
@@ -14,15 +32,16 @@ def sentc2e(embedding, sentc_ints, fixed_length=6, device="cuda"):
     # cat the sentcs in fixed length
     if isinstance(sentc_ints, int):
         sentc_ints = [sentc_ints]
-    sentc_ints.extend([sentc_ints[-1]] * (fixed_length - len(sentc_ints)))
+    # sentc_ints.extend([0] * (fixed_length - len(sentc_ints)))
     embed_vectors = None
     sentc_ints = torch.tensor(sentc_ints, dtype=torch.long).to(device)
     for i, sentc_int in enumerate(sentc_ints):
         if i == 0:
-            embed_vectors = embedding(sentc_int).unsqueeze(0).t()
+            embed_vectors = embedding(sentc_int).unsqueeze(0)
         else:
-            embed_vectors = torch.cat((embed_vectors, embedding(sentc_int).unsqueeze(0).t()), dim=1)
-    return embed_vectors
+            embed_vectors = torch.cat((embed_vectors, embedding(sentc_int).unsqueeze(0)), dim=0)
+    fixed_len_embed_vectors = fill_zeros(embed_vectors, fixed_length, dim=0, device=device)
+    return fixed_len_embed_vectors
 
 def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
 
@@ -48,7 +67,7 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
 
 def translate_story_into_token(path, file_name, word2int):
 
-    Data = collections.namedtuple("Train_Data", ["token_stories", "token_answers", "reasons"])
+    Data = collections.namedtuple("Data", ["token_stories", "token_answers", "reasons"])
 
     # read file
     raw_stories, answers, Data.reasons = readFile.read_as_story(path, file_name)
