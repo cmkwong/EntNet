@@ -45,7 +45,7 @@ else:
 
 # optimizer
 optimizer = optim.Adam(entNet.parameters(), lr=EntNET_LEARNING_RATE)
-criterion = criterions.NLLLoss()
+criterion = criterions.CrossEntropy_Loss()
 
 writer = SummaryWriter(log_dir=EntNet_TENSORBOARD_SAVE_PATH, comment="EntNet")
 with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, episode=episode, write_episode=5) as tracker:

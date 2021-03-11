@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-class CosLoss(nn.Module):
+class CosineLoss(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -36,3 +36,16 @@ class NLLLoss(nn.Module):
         loss = self.nllloss(predict, ans)
         return loss
 
+class CrossEntropy_Loss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.crossloss = nn.CrossEntropyLoss()
+
+    def forward(self, predict, ans):
+        """
+        :param predict: torch.tensor, shape=(1,m)
+        :param ans: torch.tensor, shape=(1), value is from 0 to m-1
+        :return: torch.tensor (scalar value)
+        """
+        loss = self.crossloss(predict, ans)
+        return loss
