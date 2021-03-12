@@ -6,7 +6,7 @@ DT_STRING = now.strftime("%y%m%d%H%M%S")
 # ------------------------------------------------ CONTROL START ---------------------------------------------- #
 # ------------------------------------------------------------------------------------------------------------- #
 
-VERSION = 13
+VERSION = 14
 DEVICE = "cuda"
 
 # Skip gram / EntNet, the data index: qa1 - qa20
@@ -33,7 +33,6 @@ SHUFFLE_TRAIN = True
 SHUFFLE_TEST = False
 EntNet_LOAD_NET = False
 EntNet_LOAD_INIT = True
-PAD_MAX_LENGTH = 7
 
 # Embedding (EntNet for loading)
 TIME = "210309220328" # 210308181206 - 1

@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from codes.common_cmk.config import *
 from codes.common_cmk import readFile, funcs
 import collections
 import os
 
-def fill_zeros(embedding, max_length, dim, device="cuda"):
+def cat_zeros(embedding, max_length, dim, device="cuda"):
     """
     :param embedding: 2d tensor
     :param max_length: int
@@ -23,7 +24,7 @@ def fill_zeros(embedding, max_length, dim, device="cuda"):
     required_embedding = torch.cat((embedding, zeros), dim=dim)
     return required_embedding
 
-def sentc2e(embedding, sentc_ints, fixed_length, device="cuda"):
+def sentc2e(embedding, sentc_ints, device="cuda"):
     """
     :param embedding: nn.Embedding
     :param sentc_ints: [int] / int
@@ -40,8 +41,8 @@ def sentc2e(embedding, sentc_ints, fixed_length, device="cuda"):
             embed_vectors = embedding(sentc_int).unsqueeze(0)
         else:
             embed_vectors = torch.cat((embed_vectors, embedding(sentc_int).unsqueeze(0)), dim=0)
-    fixed_len_embed_vectors = fill_zeros(embed_vectors, fixed_length, dim=0, device=device)
-    return fixed_len_embed_vectors
+    # fixed_len_embed_vectors = fill_zeros(embed_vectors, fixed_length, dim=0, device=device)
+    return embed_vectors
 
 def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
 
@@ -65,6 +66,25 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
 
     return SkipGram_Net
 
+def get_summary(stories):
+    """
+    :param stories: dict: {0: [Q1 part, Q2 part, ... ], 1: [Q1 part, Q2 part, ... ], ... }
+    :return: dict: {max_sentc_len, max_q_num, max_session_len: int, int, int}
+    """
+    stat = {"max_sentc_len":0, "max_q_num":0, "min_q_num":float('inf'), "max_session_len":0}
+    for story in stories.values():
+        if len(story) > stat["max_q_num"]:
+            stat["max_q_num"] = len(story)
+        if len(story) < stat["min_q_num"]:
+            stat["min_q_num"] = len(story)
+        for session in story:
+            if len(session.E_s) > stat["max_session_len"]:
+                stat["max_session_len"] = len(session.E_s)
+            for sentc in session.E_s:
+                if len(sentc) > stat["max_sentc_len"]:
+                    stat["max_sentc_len"] = len(sentc)
+    return stat
+
 def translate_story_into_token(path, file_name, word2int):
 
     Data = collections.namedtuple("Data", ["token_stories", "token_answers", "reasons"])
@@ -86,12 +106,11 @@ def translate_story_into_token(path, file_name, word2int):
 
     return Data
 
-def generate(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
+def generate(embedding, token_stories, token_answers, word2int, device="cuda"):
     """
     :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
     :param token_answers: [ [12,34], ... ]
     :param word2int: dict
-    :param fixed_length: int
     :return: GenSet
     """
     GenSet = collections.namedtuple('GenSet', ["E_s", 'Q', "ans_vector", "ans", "new_story", "end_story", 'stories', 'q'])
@@ -107,13 +126,13 @@ def generate(embedding, token_stories, token_answers, word2int, fixed_length=10,
                 GenSet.end_story = True
             else:
                 GenSet.end_story = False
-            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            E = sentc2e(embedding, sentence, device=device)
             if word2int['<q>'] in sentence:
                 GenSet.Q = E
                 GenSet.q = sentence
                 # acquire the ans
                 GenSet.ans = token_answers[story_i][Q_count]
-                GenSet.ans_vector = sentc2e(embedding, GenSet.ans, fixed_length=1, device=device)
+                GenSet.ans_vector = sentc2e(embedding, GenSet.ans, device=device)
                 yield GenSet
                 # reset after yield
                 GenSet.new_story = False
@@ -123,12 +142,11 @@ def generate(embedding, token_stories, token_answers, word2int, fixed_length=10,
                 GenSet.E_s.append(E)
                 GenSet.stories.append(sentence)
 
-def generate_data(embedding, token_stories, token_answers, word2int, fixed_length=10, device="cuda"):
+def generate_data(embedding, token_stories, token_answers, word2int, device="cuda"):
     """
     :param token_stories: [ [ [1,3,5,7,8,4,9,10,19],[1,3,5,7,8,4,9], [12,3,5,7,8,14,11], ... ], ... ]
     :param token_answers: [ [12,34], ... ]
     :param word2int: dict
-    :param fixed_length: int
     :return: {story_i: [ nametuple:
                             "E_s": [embedding, ...],
                             'Q': embedding,
@@ -163,14 +181,14 @@ def generate_data(embedding, token_stories, token_answers, word2int, fixed_lengt
                 DataSet.end_story = True
             else:
                 DataSet.end_story = False
-            E = sentc2e(embedding, sentence, fixed_length=fixed_length, device=device)
+            E = sentc2e(embedding, sentence, device=device)
             # check if the sentence is the question
             if word2int['<q>'] in sentence:
                 DataSet.Q = E
                 DataSet.q = sentence
                 # acquire the ans
                 DataSet.ans = token_answers[story_i][Q_count]
-                DataSet.ans_vector = sentc2e(embedding, DataSet.ans, fixed_length=1, device=device)
+                DataSet.ans_vector = sentc2e(embedding, DataSet.ans, device=device)
                 DataSets[story_i].append(DataSet)
                 # reset after yield
                 DataSet = init_data()
@@ -180,6 +198,36 @@ def generate_data(embedding, token_stories, token_answers, word2int, fixed_lengt
                 DataSet.E_s.append(E)
                 DataSet.stories.append(sentence)
     return DataSets
+
+def equalize_data_size(stories, max_sentc_len, min_q_num, max_session_len, device="cuda"):
+    """
+    :param stories: dict
+    :param max_sentc_len: int
+    :param min_q_num: int
+    :param max_session_len: int
+    :return:
+    """
+    # cut the redundant sessions
+    for key, story in stories.items():
+        if len(story) > min_q_num:
+            stories[key] = story[0:min_q_num]
+            stories[key][-1].end_story = True # set the end story is true
+    # loop the stories again
+    for key, story in stories.items():
+        for s_i, session in enumerate(story):
+            # padding sentence length both in question and each sentence
+            if len(session.Q) < max_sentc_len:
+                stories[key][s_i].Q = cat_zeros(session.Q, max_sentc_len, dim=0, device=device)
+            for i, sentc in enumerate(session.E_s):
+                if len(sentc) < max_sentc_len:
+                    stories[key][s_i].E_s[i] = cat_zeros(sentc, max_sentc_len, dim=0, device=device)
+            # padding or cutting session length
+            if len(session.E_s) > max_session_len:
+                stories[key][s_i].E_s = session.E_s[0:max_session_len]        # cut the redundant vector
+            elif len(session.E_s) < max_session_len:
+                for _ in range(max_session_len - len(session.E_s)):      # padding 0 sentence vector
+                    stories[key][s_i].E_s.insert(0, torch.zeros_like(session.E_s[0]))
+    return stories
 
 class Episode_Tracker:
     def __init__(self, entNet, int2word, path, writer, episode, write_episode):

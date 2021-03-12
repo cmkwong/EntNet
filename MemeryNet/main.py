@@ -12,16 +12,19 @@ SkipGram_Net = data.load_file_from_SkipGram(SAVE_EMBED_PATH, EMBED_FILE, LOADED_
 Train = data.translate_story_into_token(DATA_PATH, TRAIN_SET_NAME[TRAIN_DATA_INDEX], SkipGram_Net.word2int)
 Test = data.translate_story_into_token(DATA_PATH, TEST_SET_NAME[TRAIN_DATA_INDEX], SkipGram_Net.word2int)
 
-# Load the model
+# generate training and test set
+train_set_uneq = data.generate_data(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int, device=DEVICE)
+test_set_uneq = data.generate_data(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int, device=DEVICE)
+# stat of the data set, but normally the test data cannot be count into building model structure
+stat = data.get_summary(train_set_uneq)
+
+train_set = data.equalize_data_size(train_set_uneq, stat["max_sentc_len"], stat["min_q_num"], stat["max_session_len"], device=DEVICE)
+test_set = data.equalize_data_size(test_set_uneq, stat["max_sentc_len"], stat["min_q_num"], stat["max_session_len"], device=DEVICE)
+
+# Create the model
 embed_size = SkipGram_Net.weights.size()[1] # 16
 M_SLOTS = SkipGram_Net.weights.t().size()[1]
-entNet = models.EntNet(W=SkipGram_Net.weights, embed_size=embed_size, m_slots=M_SLOTS, sentc_max_len=PAD_MAX_LENGTH, device=DEVICE)
-
-# generate training and test set
-train_set = data.generate_data(SkipGram_Net.embedding, Train.token_stories, Train.token_answers, SkipGram_Net.word2int,
-                               fixed_length=PAD_MAX_LENGTH, device=DEVICE)
-test_set = data.generate_data(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int,
-                               fixed_length=PAD_MAX_LENGTH, device=DEVICE)
+entNet = models.EntNet(W=SkipGram_Net.weights, embed_size=embed_size, m_slots=M_SLOTS, sentc_max_len=stat["max_sentc_len"], device=DEVICE)
 
 if EntNet_LOAD_NET:
     print("Loading net params: {}...".format(EntNET_FILE), end=' ')
