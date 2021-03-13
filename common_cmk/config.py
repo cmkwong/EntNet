@@ -22,6 +22,7 @@ SG_BATCH_SIZE = 64
 SG_LOAD_NET = False
 
 # control for EntNet
+EntNet_BATCH_SIZE = 20
 EntNET_LEARNING_RATE = 0.001
 EntNet_SAVE_EPOCH = 500
 EntNet_TEST_EPOCH = 100

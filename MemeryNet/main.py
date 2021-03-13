@@ -17,6 +17,7 @@ train_set_uneq = data.generate_data(SkipGram_Net.embedding, Train.token_stories,
 test_set_uneq = data.generate_data(SkipGram_Net.embedding, Test.token_stories, Test.token_answers, SkipGram_Net.word2int, device=DEVICE)
 # stat of the data set, but normally the test data cannot be count into building model structure
 stat = data.get_summary(train_set_uneq)
+stat["max_session_len"] = 10
 
 train_set = data.equalize_data_size(train_set_uneq, stat["max_sentc_len"], stat["min_q_num"], stat["max_session_len"], device=DEVICE)
 test_set = data.equalize_data_size(test_set_uneq, stat["max_sentc_len"], stat["min_q_num"], stat["max_session_len"], device=DEVICE)
@@ -48,7 +49,7 @@ else:
 
 # optimizer
 optimizer = optim.Adam(entNet.parameters(), lr=EntNET_LEARNING_RATE)
-criterion = criterions.CrossEntropy_Loss()
+criterion = criterions.NLLLoss()
 
 writer = SummaryWriter(log_dir=EntNet_TENSORBOARD_SAVE_PATH, comment="EntNet")
 with data.Episode_Tracker(entNet, SkipGram_Net.int2word, RESULT_CHECKING_PATH, writer, episode=episode, write_episode=5) as tracker:

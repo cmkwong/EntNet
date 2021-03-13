@@ -72,7 +72,7 @@ class EntNet(nn.Module):
             self.params['R_b'], self.params['R'], nn.Sigmoid()(self.q + torch.addmm(
                 self.params['K_b'], self.u, self.params['K'])).t()
         )
-        self.ans = nn.Softmax()(self.ans_vector.t())
+        self.ans = nn.LogSoftmax(dim=1)(self.ans_vector.t())
         return self.ans
 
     def run_model(self, dataset, criterion, optimizer, device, mode="Train"):

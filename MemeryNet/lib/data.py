@@ -229,6 +229,43 @@ def equalize_data_size(stories, max_sentc_len, min_q_num, max_session_len, devic
                     stories[key][s_i].E_s.insert(0, torch.zeros_like(session.E_s[0]))
     return stories
 
+class DataLoader:
+    def __init__(self, stories, batch_size, shuffle):
+        """
+        :param stories: dict: [nametuple]
+        :param batch_size: int
+        :param shuffle: Boolean
+        """
+        self.stories = stories
+        self.shuffle = shuffle
+        self.batch_size = batch_size
+
+    def cat_from_stories(self):
+        full_batch = collections.namedtuple("full_batch", ["E_s", "Q", "ans", "ans_vector", "end_story", "new_story", "q", "stories"])
+        E_s_rb, Q_rb, ans_rb, end_story_rb = [], [], [], []
+        for story in self.stories.values():
+            for session in story:
+                E_s_rb.append([E.unsqueeze(0) for E in session.E_s])
+                Q_rb.append([q.unsqueeze(0) for q in session.Q])
+                ans_rb.extend([ans for ans in session.ans])
+                end_story_rb.extend([es for es in session.end_story])
+
+
+
+
+
+
+    def prepare(self, epoches):
+        batches = []
+        for _ in range(epoches):
+            shuffle_num = np.arange(len(self.stories))
+            if SHUFFLE_TRAIN:
+                np.random.shuffle(shuffle_num)
+            shuffle_num = shuffle_num[0:(len(shuffle_num) // self.batch_size) * self.batch_size]
+            for index in range(0, len(shuffle_num), self.batch_size):
+                pass
+
+
 class Episode_Tracker:
     def __init__(self, entNet, int2word, path, writer, episode, write_episode):
         """
