@@ -69,7 +69,7 @@ def load_file_from_SkipGram(path, embedding_file, int2word_file, word2int_file):
 def get_summary(stories):
     """
     :param stories: dict: {0: [Q1 part, Q2 part, ... ], 1: [Q1 part, Q2 part, ... ], ... }
-    :return: dict: {max_sentc_len, max_q_num, max_session_len: int, int, int}
+    :return: dict: {max_sentc_len, max_q_num, min_q_num, max_session_len: int, int, int, int}
     """
     stat = {"max_sentc_len":0, "max_q_num":0, "min_q_num":float('inf'), "max_session_len":0}
     for story in stories.values():
@@ -229,42 +229,77 @@ def equalize_data_size(stories, max_sentc_len, min_q_num, max_session_len, devic
                     stories[key][s_i].E_s.insert(0, torch.zeros_like(session.E_s[0]))
     return stories
 
+def cat_to_full_batch(stories, stat):
+    """
+    :param stories: equalized size train_set/test_set
+    :param stat: dict {max_sentc_len, max_q_num, min_q_num, max_session_len: int, int, int, int}
+    :return: full_batch
+    """
+    # init the batch nametuple and their size
+    full_batch = collections.namedtuple("full_batch", ["E_s", "Q", "ans", "ans_vector", "end_story", "new_story", "q", "stories"])
+    full_batch.E_s = torch.empty((len(stories), stat["min_q_num"], stat["max_session_len"], stat["max_sentc_len"], EMBED_SIZE))
+    full_batch.Q = torch.empty((len(stories), stat["min_q_num"], stat["max_sentc_len"], EMBED_SIZE))
+    full_batch.ans = torch.empty((len(stories), stat["min_q_num"], 1))
+    full_batch.ans_vector = torch.empty((len(stories), stat["min_q_num"], 1, EMBED_SIZE))
+    full_batch.end_story = torch.zeros((len(stories),stat["min_q_num"]), dtype=torch.bool)
+    full_batch.new_story = torch.zeros((len(stories),stat["min_q_num"]), dtype=torch.bool)
+    full_batch.q = np.empty((len(stories), stat["min_q_num"]), dtype=object)
+    full_batch.stories = np.empty((len(stories), stat["min_q_num"]), dtype=object)
+
+    for story_i, story in enumerate(stories.values()):
+        for session_i, session in enumerate(story):
+            for sentc_i, E in enumerate(session.E_s):
+                full_batch.E_s[story_i, session_i, sentc_i, :, :] = E
+            full_batch.Q[story_i, session_i, :, :] = session.Q
+            full_batch.ans[story_i, session_i, :] = session.ans
+            full_batch.ans_vector[story_i, session_i, :, :] = session.ans_vector
+            full_batch.end_story[story_i, session_i] = session.end_story
+            full_batch.new_story[story_i, session_i] = session.new_story
+            full_batch.q[story_i, session_i] = session.q
+            full_batch.stories[story_i, session_i] = session.stories
+    return full_batch
+
 class DataLoader:
-    def __init__(self, stories, batch_size, shuffle):
+    def __init__(self, full_batch, batch_size, shuffle):
         """
-        :param stories: dict: [nametuple]
+        :param stories: nametuple: E_s, Q, ans, ans_vector, end_story, new_story, q, stories (They cat all of data)
         :param batch_size: int
         :param shuffle: Boolean
         """
-        self.stories = stories
+        self.full_batch = full_batch
         self.shuffle = shuffle
         self.batch_size = batch_size
 
-    def cat_from_stories(self):
-        full_batch = collections.namedtuple("full_batch", ["E_s", "Q", "ans", "ans_vector", "end_story", "new_story", "q", "stories"])
-        E_s_rb, Q_rb, ans_rb, end_story_rb = [], [], [], []
-        for story in self.stories.values():
-            for session in story:
-                E_s_rb.append([E.unsqueeze(0) for E in session.E_s])
-                Q_rb.append([q.unsqueeze(0) for q in session.Q])
-                ans_rb.extend([ans for ans in session.ans])
-                end_story_rb.extend([es for es in session.end_story])
+    def _data_extract(self, index):
+        """
+        :param index: list
+        :return batch: nametuple
+        """
+        batch = collections.namedtuple("batch", ["E_s", "Q", "ans", "ans_vector", "end_story", "new_story", "q", "stories"])
+        batch.E_s = self.full_batch.E_s[index, :, :, :, :]
+        batch.Q = self.full_batch.Q[index, :, :, :]
+        batch.ans = self.full_batch.ans[index, :, :]
+        batch.ans_vector = self.full_batch.ans_vector[index, :, :, :]
+        batch.end_story = self.full_batch.end_story[index, :]
+        batch.new_story = self.full_batch.new_story[index, :]
+        batch.q = self.full_batch.q[index, :]
+        batch.stories = self.full_batch.stories[index, :]
+        return batch
 
-
-
-
-
-
-    def prepare(self, epoches):
-        batches = []
-        for _ in range(epoches):
-            shuffle_num = np.arange(len(self.stories))
-            if SHUFFLE_TRAIN:
-                np.random.shuffle(shuffle_num)
-            shuffle_num = shuffle_num[0:(len(shuffle_num) // self.batch_size) * self.batch_size]
-            for index in range(0, len(shuffle_num), self.batch_size):
-                pass
-
+    def __iter__(self):
+        tailed_num = []
+        while True:
+            data_index = [i for i in range(len(self.full_batch.E_s))]
+            if self.shuffle:
+                np.random.shuffle(data_index)
+            data_index = tailed_num + data_index # combine both list of tailed num and head num, after shuffle
+            cut_index = len(data_index) // self.batch_size * self.batch_size
+            head_num = data_index[0:cut_index]
+            for i in range(0, len(head_num), self.batch_size):
+                batch_index = head_num[i:i+self.batch_size]
+                batch = self._data_extract(batch_index)
+                yield batch
+            tailed_num = data_index[cut_index:]
 
 class Episode_Tracker:
     def __init__(self, entNet, int2word, path, writer, episode, write_episode):
