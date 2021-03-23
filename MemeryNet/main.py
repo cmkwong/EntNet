@@ -1,5 +1,5 @@
 from lib import data, models, criterions, graph
-from codes.common_cmk.config import *
+from common_cmk.config import *
 import torch
 import torch.optim as optim
 import os
@@ -23,10 +23,10 @@ train_set = data.equalize_data_size(train_set_uneq, stat["max_sentc_len"], stat[
 test_set = data.equalize_data_size(test_set_uneq, stat["max_sentc_len"], stat["min_q_num"], stat["max_session_len"], device=DEVICE)
 train_full_batch = data.cat_to_full_batch(train_set, stat)
 test_full_batch = data.cat_to_full_batch(test_set, stat)
-train_loader = data.DataLoader(train_full_batch, 32, shuffle=True)
-test_loader = data.DataLoader(test_full_batch, 32, shuffle=True)
-for batch in train_loader:
-    print("batch")
+train_loader = data.DataLoader(train_full_batch, 32, shuffle=True, episode_len=stat["story_len"])
+test_loader = data.DataLoader(test_full_batch, 32, shuffle=True, episode_len=stat["story_len"])
+batches = train_loader.create_batches()
+
 # Create the model
 embed_size = SkipGram_Net.weights.size()[1] # 16
 M_SLOTS = SkipGram_Net.weights.t().size()[1]

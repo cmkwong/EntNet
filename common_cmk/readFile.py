@@ -1,6 +1,6 @@
 import re
 from collections import Counter
-from codes.common_cmk.config import *
+from common_cmk.config import *
 
 def read_txt_generator(path, file_name):
     full_path = path + '/' + file_name

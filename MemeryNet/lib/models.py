@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 from torch import nn
-from codes.common_cmk import funcs
-from codes.MemeryNet.lib import descriptor
+from common_cmk import funcs
+from MemeryNet.lib import descriptor
 import pickle
 
 class EntNet(nn.Module):

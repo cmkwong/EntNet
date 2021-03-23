@@ -53,7 +53,7 @@ EntNET_INIT_FILE = EntNET_INIT_FILE_FORMAT.format("210309220938", 13) # 7 paddin
 # ------------------------------------------------ CONTROL END ------------------------------------------------ #
 # ------------------------------------------------------------------------------------------------------------- #
 
-MAIN_PATH = "/home/chris/projects/201119_EntNet/docs/"
+MAIN_PATH = "C:/Users/Chris/projects/201119_EntNet/docs/"
 DATA_PATH = MAIN_PATH + "tasks_1-20_v1-2/en"
 TRAIN_SET_NAME = {
     1: "qa1_single-supporting-fact_train.txt",

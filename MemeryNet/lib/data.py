@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from codes.common_cmk.config import *
-from codes.common_cmk import readFile, funcs
+from common_cmk.config import *
+from common_cmk import readFile, funcs
 import collections
 import os
 
@@ -71,7 +71,8 @@ def get_summary(stories):
     :param stories: dict: {0: [Q1 part, Q2 part, ... ], 1: [Q1 part, Q2 part, ... ], ... }
     :return: dict: {max_sentc_len, max_q_num, min_q_num, max_session_len: int, int, int, int}
     """
-    stat = {"max_sentc_len":0, "max_q_num":0, "min_q_num":float('inf'), "max_session_len":0}
+    stat = {"story_len": 0, "max_sentc_len":0, "max_q_num":0, "min_q_num":float('inf'), "max_session_len":0}
+    stat["story_len"] = len(stories)
     for story in stories.values():
         if len(story) > stat["max_q_num"]:
             stat["max_q_num"] = len(story)
@@ -237,30 +238,30 @@ def cat_to_full_batch(stories, stat):
     """
     # init the batch nametuple and their size
     full_batch = collections.namedtuple("full_batch", ["E_s", "Q", "ans", "ans_vector", "end_story", "new_story", "q", "stories"])
-    full_batch.E_s = torch.empty((len(stories), stat["min_q_num"], stat["max_session_len"], stat["max_sentc_len"], EMBED_SIZE))
-    full_batch.Q = torch.empty((len(stories), stat["min_q_num"], stat["max_sentc_len"], EMBED_SIZE))
-    full_batch.ans = torch.empty((len(stories), stat["min_q_num"], 1))
-    full_batch.ans_vector = torch.empty((len(stories), stat["min_q_num"], 1, EMBED_SIZE))
-    full_batch.end_story = torch.zeros((len(stories),stat["min_q_num"]), dtype=torch.bool)
-    full_batch.new_story = torch.zeros((len(stories),stat["min_q_num"]), dtype=torch.bool)
-    full_batch.q = np.empty((len(stories), stat["min_q_num"]), dtype=object)
-    full_batch.stories = np.empty((len(stories), stat["min_q_num"]), dtype=object)
+    full_batch.E_s = torch.empty((stat["min_q_num"], stat["max_session_len"], len(stories), stat["max_sentc_len"], EMBED_SIZE))
+    full_batch.Q = torch.empty((stat["min_q_num"], len(stories), stat["max_sentc_len"], EMBED_SIZE))
+    full_batch.ans = torch.empty((stat["min_q_num"], len(stories), 1))
+    full_batch.ans_vector = torch.empty((stat["min_q_num"], len(stories), 1, EMBED_SIZE))
+    full_batch.end_story = torch.zeros((stat["min_q_num"], len(stories)), dtype=torch.bool)
+    full_batch.new_story = torch.zeros((stat["min_q_num"], len(stories)), dtype=torch.bool)
+    full_batch.q = np.empty((stat["min_q_num"], len(stories)), dtype=object)
+    full_batch.stories = np.empty((stat["min_q_num"], len(stories)), dtype=object)
 
     for story_i, story in enumerate(stories.values()):
         for session_i, session in enumerate(story):
             for sentc_i, E in enumerate(session.E_s):
-                full_batch.E_s[story_i, session_i, sentc_i, :, :] = E
-            full_batch.Q[story_i, session_i, :, :] = session.Q
-            full_batch.ans[story_i, session_i, :] = session.ans
-            full_batch.ans_vector[story_i, session_i, :, :] = session.ans_vector
-            full_batch.end_story[story_i, session_i] = session.end_story
-            full_batch.new_story[story_i, session_i] = session.new_story
-            full_batch.q[story_i, session_i] = session.q
-            full_batch.stories[story_i, session_i] = session.stories
+                full_batch.E_s[session_i, sentc_i, story_i :, :] = E
+            full_batch.Q[session_i, story_i :, :] = session.Q
+            full_batch.ans[session_i, story_i :] = session.ans
+            full_batch.ans_vector[session_i, story_i, :, :] = session.ans_vector
+            full_batch.end_story[session_i, story_i] = session.end_story
+            full_batch.new_story[session_i, story_i] = session.new_story
+            full_batch.q[session_i, story_i] = session.q
+            full_batch.stories[session_i, story_i] = session.stories
     return full_batch
 
 class DataLoader:
-    def __init__(self, full_batch, batch_size, shuffle):
+    def __init__(self, full_batch, batch_size, shuffle, episode_len):
         """
         :param stories: nametuple: E_s, Q, ans, ans_vector, end_story, new_story, q, stories (They cat all of data)
         :param batch_size: int
@@ -269,6 +270,7 @@ class DataLoader:
         self.full_batch = full_batch
         self.shuffle = shuffle
         self.batch_size = batch_size
+        self.episode_len = episode_len
 
     def _data_extract(self, index):
         """
@@ -276,20 +278,20 @@ class DataLoader:
         :return batch: nametuple
         """
         batch = collections.namedtuple("batch", ["E_s", "Q", "ans", "ans_vector", "end_story", "new_story", "q", "stories"])
-        batch.E_s = self.full_batch.E_s[index, :, :, :, :]
-        batch.Q = self.full_batch.Q[index, :, :, :]
-        batch.ans = self.full_batch.ans[index, :, :]
-        batch.ans_vector = self.full_batch.ans_vector[index, :, :, :]
-        batch.end_story = self.full_batch.end_story[index, :]
-        batch.new_story = self.full_batch.new_story[index, :]
-        batch.q = self.full_batch.q[index, :]
-        batch.stories = self.full_batch.stories[index, :]
+        batch.E_s = self.full_batch.E_s[:, :, index, :, :]
+        batch.Q = self.full_batch.Q[:, index, :, :]
+        batch.ans = self.full_batch.ans[:, index, :]
+        batch.ans_vector = self.full_batch.ans_vector[:, index, :, :]
+        batch.end_story = self.full_batch.end_story[:, index]
+        batch.new_story = self.full_batch.new_story[:, index]
+        batch.q = self.full_batch.q[:, index]
+        batch.stories = self.full_batch.stories[:, index]
         return batch
 
     def __iter__(self):
         tailed_num = []
         while True:
-            data_index = [i for i in range(len(self.full_batch.E_s))]
+            data_index = [i for i in range(self.episode_len)]
             if self.shuffle:
                 np.random.shuffle(data_index)
             data_index = tailed_num + data_index # combine both list of tailed num and head num, after shuffle
@@ -300,6 +302,16 @@ class DataLoader:
                 batch = self._data_extract(batch_index)
                 yield batch
             tailed_num = data_index[cut_index:]
+
+    def create_batches(self):
+        """
+        :return: batches [batch]
+        """
+        batches = []
+        for b in self:
+            batches.append(b)
+            if len(batches) == self.episode_len:
+                return batches
 
 class Episode_Tracker:
     def __init__(self, entNet, int2word, path, writer, episode, write_episode):
